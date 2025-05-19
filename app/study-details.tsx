@@ -5,6 +5,7 @@ import { useRouter } from 'expo-router';
 import { Calendar, Clock, User, FileText, Activity, Eye } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import { useStudiesStore } from '@/store/studiesStore';
+import { usePatientStore } from '@/store/patientStore';
 import Button from '@/components/shared/Button';
 
 export default function StudyDetailsScreen() {
@@ -39,8 +40,6 @@ export default function StudyDetailsScreen() {
     switch (selectedStudy.priority) {
       case 'STAT':
         return Colors.error;
-      case 'Urgent':
-        return Colors.warning;
       case 'Routine':
         return Colors.info;
       default:
@@ -173,9 +172,11 @@ export default function StudyDetailsScreen() {
 
       <View style={styles.actionsContainer}>
         <Button
-          title="Edit Study"
-          onPress={() => router.push('/edit-study')}
-          variant="outline"
+          title="Generate Report"
+          onPress={() => router.push({
+            pathname: '/radiology-report',
+            params: { patientId: selectedStudy.patientId, studyId: selectedStudy.id }
+          })}
           icon={<FileText size={18} color={Colors.primary} />}
           fullWidth
         />

@@ -14,20 +14,27 @@ type ImageViewerProps = {
     bodyPart: string;
     studyDate: string;
   };
+  currentImageIndex?: number;
+  setCurrentImageIndex?: (idx: number) => void;
+  zoom?: number;
 };
 
-const ImageViewer: React.FC<ImageViewerProps> = ({ images, studyInfo }) => {
+const ImageViewer: React.FC<ImageViewerProps> = ({ images, studyInfo, currentImageIndex: propsCurrentImageIndex, setCurrentImageIndex: propsSetCurrentImageIndex, zoom: propsZoom }) => {
   const {
-    currentImageIndex,
-    zoom,
+    currentImageIndex: storeImageIndex,
+    zoom: storeZoom,
     brightness,
     contrast,
     isInverted,
     layout,
-    setCurrentImageIndex,
+    setCurrentImageIndex: storeSetCurrentImageIndex,
   } = useViewerStore();
 
   const [imageSize, setImageSize] = useState({ width: 0, height: 0 });
+
+  const currentImageIndex = typeof propsCurrentImageIndex === 'number' ? propsCurrentImageIndex : storeImageIndex;
+  const setCurrentImageIndex = propsSetCurrentImageIndex || storeSetCurrentImageIndex;
+  const zoom = typeof propsZoom === 'number' ? propsZoom : storeZoom;
 
   const handlePrevImage = () => {
     if (currentImageIndex > 0) {

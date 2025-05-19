@@ -1,12 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, RefreshControl } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, RefreshControl, Platform } from 'react-native';
+// import { Picker } from '@react-native-picker/picker'; // Remove this for web compatibility
 import { useRouter } from 'expo-router';
 import { Stack } from 'expo-router';
 import Colors from '@/constants/colors';
 import { useStudiesStore } from '@/store/studiesStore';
 import StudyCard from '@/components/shared/StudyCard';
 import SearchBar from '@/components/shared/SearchBar';
-import FilterChip from '@/components/shared/FilterChip';
 import { Study, Modality, StudyStatus } from '@/types';
 
 export default function AllStudiesScreen() {
@@ -94,12 +94,42 @@ export default function AllStudiesScreen() {
     router.push('/study-details');
   };
 
-  const handleModalityFilter = (modality: Modality | 'All') => {
-    setSelectedModality(modality);
-  };
-
-  const handleStatusFilter = (status: StudyStatus | 'All') => {
-    setSelectedStatus(status);
+  // Cross-platform dropdown component
+  const Dropdown = ({ label, value, onChange, options }: { label: string, value: string, onChange: (v: string) => void, options: string[] }) => {
+    if (Platform.OS === 'web') {
+      return (
+        <View style={styles.dropdownWrapper}>
+          <label style={{ fontWeight: '500', fontSize: 14, color: Colors.text, marginBottom: 4 }}>{label}</label>
+          <select
+            style={{ width: '100%', height: 44, borderRadius: 8, background: Colors.card, fontSize: 16, paddingLeft: 8 }}
+            value={value}
+            onChange={e => onChange(e.target.value)}
+          >
+            {options.map(opt => (
+              <option key={opt} value={opt}>{opt}</option>
+            ))}
+          </select>
+        </View>
+      );
+    } else {
+      const { Picker } = require('@react-native-picker/picker');
+      return (
+        <View style={styles.dropdownWrapper}>
+          <Text style={styles.dropdownLabel}>{label}</Text>
+          <Picker
+            selectedValue={value}
+            onValueChange={onChange}
+            style={styles.picker}
+            itemStyle={styles.pickerItem}
+            mode="dropdown"
+          >
+            {options.map(opt => (
+              <Picker.Item key={opt} label={opt} value={opt} />
+            ))}
+          </Picker>
+        </View>
+      );
+    }
   };
 
   return (
@@ -111,41 +141,23 @@ export default function AllStudiesScreen() {
           onChangeText={setSearchQuery}
           placeholder="Search by patient, accession #, body part..."
         />
-        
-        <Text style={styles.filterLabel}>Filter by Modality:</Text>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.filtersContainer}
-          contentContainerStyle={styles.filtersContent}
-        >
-          {modalities.map((modality) => (
-            <FilterChip
-              key={modality}
-              label={modality}
-              isSelected={selectedModality === modality}
-              onPress={() => handleModalityFilter(modality)}
-            />
-          ))}
-        </ScrollView>
-        
-        <Text style={styles.filterLabel}>Filter by Status:</Text>
-        <ScrollView
-          horizontal
-          showsHorizontalScrollIndicator={false}
-          style={styles.filtersContainer}
-          contentContainerStyle={styles.filtersContent}
-        >
-          {statuses.map((status) => (
-            <FilterChip
-              key={status}
-              label={status}
-              isSelected={selectedStatus === status}
-              onPress={() => handleStatusFilter(status)}
-            />
-          ))}
-        </ScrollView>
-        
+
+        {/* Dropdown Filters */}
+        <View style={styles.dropdownRow}>
+          <Dropdown
+            label="Modality"
+            value={selectedModality}
+            onChange={v => setSelectedModality(v as Modality | 'All')}
+            options={modalities}
+          />
+          <Dropdown
+            label="Status"
+            value={selectedStatus}
+            onChange={v => setSelectedStatus(v as StudyStatus | 'All')}
+            options={statuses}
+          />
+        </View>
+
         <ScrollView
           style={styles.listContainer}
           contentContainerStyle={styles.listContent}
@@ -154,7 +166,6 @@ export default function AllStudiesScreen() {
           }
         >
           <Text style={styles.resultsCount}>{filteredStudies.length} studies found</Text>
-          
           {filteredStudies.length > 0 ? (
             filteredStudies.map((study) => (
               <StudyCard key={study.id} study={study} onPress={handleStudyPress} />
@@ -180,17 +191,34 @@ const styles = StyleSheet.create({
     backgroundColor: Colors.background,
     padding: 16,
   },
-  filterLabel: {
-    fontSize: 14,
-    fontWeight: '500',
-    color: Colors.text,
-    marginBottom: 8,
-  },
-  filtersContainer: {
+  dropdownRow: {
+    flexDirection: 'row',
+    gap: 12,
     marginBottom: 16,
   },
-  filtersContent: {
-    paddingRight: 16,
+  dropdownWrapper: {
+    flex: 1,
+  },
+  dropdownLabel: {
+    fontSize: 14,
+    color: Colors.text,
+    marginBottom: 4,
+    fontWeight: '500',
+  },
+  picker: {
+    backgroundColor: Colors.card,
+    borderRadius: 8,
+    ...Platform.select({
+      ios: {
+        height: 44,
+      },
+      android: {
+        height: 44,
+      },
+    }),
+  },
+  pickerItem: {
+    fontSize: 16,
   },
   listContainer: {
     flex: 1,
