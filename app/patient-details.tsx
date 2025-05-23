@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
-import { Calendar, Phone, Mail, MapPin, FileText, Plus, Edit } from 'lucide-react-native';
+import { Calendar, Phone, Mail, MapPin, FileText, Plus, Edit, AlertTriangle, Activity, Clock, User, Syringe, Baby, Moon } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import { usePatientStore } from '@/store/patientStore';
 import { useStudiesStore } from '@/store/studiesStore';
@@ -17,6 +17,7 @@ export default function PatientDetailsScreen() {
   
   const [patientStudies, setPatientStudies] = useState<Study[]>([]);
   const [patientAppointments, setPatientAppointments] = useState<Appointment[]>([]);
+  const [activeTab, setActiveTab] = useState<'upcoming' | 'past'>('upcoming');
 
   useEffect(() => {
     if (selectedPatient) {
@@ -43,18 +44,38 @@ export default function PatientDetailsScreen() {
   };
 
   const handleAppointmentPress = (appointment: Appointment) => {
-    router.push('/appointment-details');
+    router.push({
+      pathname: '/appointment-details',
+      params: { appointmentId: appointment.id }
+    });
   };
+
+  const upcomingStudies = patientStudies.filter(study => 
+    new Date(study.studyDate) >= new Date() || study.status === 'In Progress'
+  );
+
+  const pastStudies = patientStudies.filter(study => 
+    new Date(study.studyDate) < new Date() && study.status !== 'In Progress'
+  );
+
+  const hasContrastAllergy = selectedPatient.allergies?.some(allergy => 
+    allergy.toLowerCase().includes('contrast') || 
+    allergy.toLowerCase().includes('iodine')
+  );
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
+      {/* Patient Header */}
       <View style={styles.header}>
         <View style={styles.headerTop}>
           <View>
             <Text style={styles.patientName}>{selectedPatient.name}</Text>
             <Text style={styles.patientId}>{selectedPatient.patientId}</Text>
           </View>
-          <TouchableOpacity style={styles.editButton} onPress={() => router.push('/edit-patient')}>
+          <TouchableOpacity style={styles.editButton} onPress={() => router.push({
+            pathname: '/new-patient',
+            params: { patientId: selectedPatient.id }
+          })}>
             <Edit size={20} color={Colors.primary} />
           </TouchableOpacity>
         </View>
@@ -65,6 +86,25 @@ export default function PatientDetailsScreen() {
         </View>
       </View>
 
+      {/* Critical Information Banner */}
+      {(hasContrastAllergy || selectedPatient.age < 18) && (
+        <View style={styles.criticalInfoBanner}>
+          {hasContrastAllergy && (
+            <View style={styles.criticalInfoItem}>
+              <AlertTriangle size={16} color={Colors.error} />
+              <Text style={styles.criticalInfoText}>Contrast Allergy</Text>
+            </View>
+          )}
+          {selectedPatient.age < 18 && (
+            <View style={styles.criticalInfoItem}>
+              <Baby size={16} color={Colors.warning} />
+              <Text style={styles.criticalInfoText}>Pediatric Patient</Text>
+            </View>
+          )}
+        </View>
+      )}
+
+      {/* Contact Information */}
       <View style={styles.section}>
         <Text style={styles.sectionTitle}>Contact Information</Text>
         <View style={styles.infoRow}>
@@ -85,76 +125,111 @@ export default function PatientDetailsScreen() {
         )}
       </View>
 
-      {selectedPatient.medicalHistory || selectedPatient.allergies?.length > 0 ? (
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Medical Information</Text>
-          {selectedPatient.medicalHistory && (
-            <View style={styles.medicalInfoRow}>
-              <Text style={styles.medicalInfoLabel}>Medical History:</Text>
-              <Text style={styles.medicalInfoText}>{selectedPatient.medicalHistory}</Text>
-            </View>
-          )}
-          {selectedPatient.allergies && selectedPatient.allergies.length > 0 && (
-            <View style={styles.medicalInfoRow}>
-              <Text style={styles.medicalInfoLabel}>Allergies:</Text>
-              <Text style={[styles.medicalInfoText, styles.allergiesText]}>
-                {selectedPatient.allergies.join(', ')}
-              </Text>
-            </View>
-          )}
-          {selectedPatient.insuranceInfo && (
-            <View style={styles.medicalInfoRow}>
-              <Text style={styles.medicalInfoLabel}>Insurance:</Text>
-              <Text style={styles.medicalInfoText}>{selectedPatient.insuranceInfo}</Text>
-            </View>
-          )}
-        </View>
-      ) : null}
-
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>Imaging Studies</Text>
-        <TouchableOpacity style={styles.addButton} onPress={() => router.push('/new-study')}>
-          <Plus size={16} color={Colors.primary} />
-          <Text style={styles.addButtonText}>New Study</Text>
-        </TouchableOpacity>
+      {/* Medical Information */}
+      <View style={styles.section}>
+        <Text style={styles.sectionTitle}>Medical Information</Text>
+        {selectedPatient.allergies && selectedPatient.allergies.length > 0 && (
+          <View style={styles.medicalInfoRow}>
+            <Text style={styles.medicalInfoLabel}>Allergies:</Text>
+            <Text style={[styles.medicalInfoText, styles.allergiesText]}>
+              {selectedPatient.allergies.join(', ')}
+            </Text>
+          </View>
+        )}
+        {selectedPatient.medicalHistory && (
+          <View style={styles.medicalInfoRow}>
+            <Text style={styles.medicalInfoLabel}>Medical History:</Text>
+            <Text style={styles.medicalInfoText}>{selectedPatient.medicalHistory}</Text>
+          </View>
+        )}
+        {selectedPatient.insuranceInfo && (
+          <View style={styles.medicalInfoRow}>
+            <Text style={styles.medicalInfoLabel}>Insurance:</Text>
+            <Text style={styles.medicalInfoText}>{selectedPatient.insuranceInfo}</Text>
+          </View>
+        )}
       </View>
 
-      {patientStudies.length > 0 ? (
-        patientStudies.map((study) => (
-          <StudyCard key={study.id} study={study} onPress={handleStudyPress} />
-        ))
-      ) : (
-        <View style={styles.emptyState}>
-          <Text style={styles.emptyStateText}>No studies available</Text>
+      {/* Imaging Studies Section */}
+      <View style={styles.section}>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Imaging Studies</Text>
+          <TouchableOpacity style={styles.addButton} onPress={() => router.push({
+            pathname: '/all-studies',
+            params: { patientId: selectedPatient.id }
+          })}>
+            <Plus size={16} color={Colors.primary} />
+            <Text style={styles.addButtonText}>All Studies</Text>
+          </TouchableOpacity>
         </View>
-      )}
 
-      <View style={styles.sectionHeader}>
-        <Text style={styles.sectionTitle}>Appointments</Text>
-        <TouchableOpacity style={styles.addButton} onPress={() => router.push('/schedule-appointment')}>
-          <Plus size={16} color={Colors.primary} />
-          <Text style={styles.addButtonText}>Schedule</Text>
-        </TouchableOpacity>
+        {/* Study Type Tabs */}
+        <View style={styles.tabContainer}>
+          <TouchableOpacity 
+            style={[styles.tab, activeTab === 'upcoming' && styles.activeTab]}
+            onPress={() => setActiveTab('upcoming')}
+          >
+            <Text style={[styles.tabText, activeTab === 'upcoming' && styles.activeTabText]}>
+              Upcoming/Current
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity 
+            style={[styles.tab, activeTab === 'past' && styles.activeTab]}
+            onPress={() => setActiveTab('past')}
+          >
+            <Text style={[styles.tabText, activeTab === 'past' && styles.activeTabText]}>
+              Past Studies
+            </Text>
+          </TouchableOpacity>
+        </View>
+
+        {/* Studies List */}
+        {activeTab === 'upcoming' ? (
+          upcomingStudies.length > 0 ? (
+            upcomingStudies.map((study) => (
+              <StudyCard key={study.id} study={study} onPress={handleStudyPress} />
+            ))
+          ) : (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyStateText}>No upcoming studies</Text>
+            </View>
+          )
+        ) : (
+          pastStudies.length > 0 ? (
+            pastStudies.map((study) => (
+              <StudyCard key={study.id} study={study} onPress={handleStudyPress} />
+            ))
+          ) : (
+            <View style={styles.emptyState}>
+              <Text style={styles.emptyStateText}>No past studies</Text>
+            </View>
+          )
+        )}
       </View>
 
-      {patientAppointments.length > 0 ? (
-        patientAppointments.map((appointment) => (
-          <AppointmentCard key={appointment.id} appointment={appointment} onPress={handleAppointmentPress} />
-        ))
-      ) : (
-        <View style={styles.emptyState}>
-          <Text style={styles.emptyStateText}>No appointments scheduled</Text>
+      {/* Appointments Section */}
+      <View style={styles.section}>
+        <View style={styles.sectionHeader}>
+          <Text style={styles.sectionTitle}>Radiology Appointments</Text>
+          <TouchableOpacity style={styles.addButton} onPress={() => router.push('/schedule-appointment')}>
+            <Plus size={16} color={Colors.primary} />
+            <Text style={styles.addButtonText}>Schedule</Text>
+          </TouchableOpacity>
         </View>
-      )}
 
+        {patientAppointments.length > 0 ? (
+          patientAppointments.map((appointment) => (
+            <AppointmentCard key={appointment.id} appointment={appointment} onPress={handleAppointmentPress} />
+          ))
+        ) : (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyStateText}>No appointments scheduled</Text>
+          </View>
+        )}
+      </View>
+
+      {/* Action Buttons */}
       <View style={styles.actionsContainer}>
-        <Button
-          title="View Patient History"
-          onPress={() => router.push('/patient-history')}
-          variant="outline"
-          icon={<FileText size={18} color={Colors.primary} />}
-          fullWidth
-        />
         <View style={styles.buttonSpacer} />
         <Button
           title="Schedule New Appointment"
@@ -181,6 +256,17 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 3,
+      },
+    }),
   },
   headerTop: {
     flexDirection: 'row',
@@ -212,16 +298,52 @@ const styles = StyleSheet.create({
     fontSize: 14,
     color: Colors.darkGray,
   },
+  criticalInfoBanner: {
+    backgroundColor: Colors.warningLight,
+    borderRadius: 8,
+    padding: 12,
+    marginBottom: 16,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 16,
+  },
+  criticalInfoItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  criticalInfoText: {
+    fontSize: 14,
+    fontWeight: '500',
+    color: Colors.warning,
+  },
   section: {
     backgroundColor: Colors.card,
     borderRadius: 12,
     padding: 16,
     marginBottom: 16,
+    ...Platform.select({
+      ios: {
+        shadowColor: '#000',
+        shadowOffset: { width: 0, height: 2 },
+        shadowOpacity: 0.1,
+        shadowRadius: 4,
+      },
+      android: {
+        elevation: 3,
+      },
+    }),
   },
   sectionTitle: {
     fontSize: 16,
     fontWeight: '600',
     color: Colors.text,
+    marginBottom: 12,
+  },
+  sectionHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
     marginBottom: 12,
   },
   infoRow: {
@@ -250,12 +372,6 @@ const styles = StyleSheet.create({
   allergiesText: {
     color: Colors.error,
   },
-  sectionHeader: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 12,
-  },
   addButton: {
     flexDirection: 'row',
     alignItems: 'center',
@@ -270,20 +386,45 @@ const styles = StyleSheet.create({
     fontWeight: '500',
     marginLeft: 4,
   },
+  tabContainer: {
+    flexDirection: 'row',
+    backgroundColor: Colors.lightGray,
+    borderRadius: 8,
+    padding: 4,
+    marginBottom: 16,
+  },
+  tab: {
+    flex: 1,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    alignItems: 'center',
+  },
+  activeTab: {
+    backgroundColor: Colors.primary,
+  },
+  tabText: {
+    fontSize: 14,
+    color: Colors.darkGray,
+    fontWeight: '500',
+  },
+  activeTabText: {
+    color: 'white',
+  },
   emptyState: {
     backgroundColor: Colors.lightGray,
-    padding: 16,
+    padding: 24,
     borderRadius: 8,
     alignItems: 'center',
     justifyContent: 'center',
-    marginBottom: 16,
   },
   emptyStateText: {
     fontSize: 14,
     color: Colors.subtext,
+    textAlign: 'center',
   },
   actionsContainer: {
-    marginTop: 8,
+    gap: 12,
   },
   buttonSpacer: {
     height: 12,

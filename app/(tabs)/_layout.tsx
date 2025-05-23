@@ -1,32 +1,46 @@
 import React from 'react';
 import { Tabs } from 'expo-router';
-import { Home, ClipboardList, Users, Image } from 'lucide-react-native';
+import { Home, ClipboardList, Users, Image, Calendar, FileText, Settings as SettingsIcon, Wrench } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 
 export default function TabLayout() {
   return (
     <Tabs
       screenOptions={{
-        tabBarActiveTintColor: Colors.primary,
-        tabBarInactiveTintColor: Colors.darkGray,
+        tabBarActiveTintColor: '#fff',
+        tabBarInactiveTintColor: '#90A4AE',
         tabBarStyle: {
-          backgroundColor: Colors.card,
-          borderTopColor: Colors.border,
+          backgroundColor: '#0A2342',
+          borderTopColor: '#0A2342',
         },
         headerStyle: {
-          backgroundColor: Colors.card,
+          backgroundColor: '#0A2342',
         },
         headerTitleStyle: {
-          color: Colors.text,
+          color: '#fff',
           fontWeight: '600',
         },
       }}
     >
       <Tabs.Screen
-        name="index"
+        name="dashboard"
         options={{
           title: 'Dashboard',
           tabBarIcon: ({ color }) => <Home size={24} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="radiology-report"
+        options={{
+          title: 'Report',
+          tabBarIcon: ({ color }) => <FileText size={24} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="weekly-schedule"
+        options={{
+          title: 'Schedule',
+          tabBarIcon: ({ color }) => <Calendar size={24} color={color} />,
         }}
       />
       <Tabs.Screen
@@ -48,6 +62,20 @@ export default function TabLayout() {
         options={{
           title: 'Viewer',
           tabBarIcon: ({ color }) => <Image size={24} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="equipment"
+        options={{
+          title: 'Equipment',
+          tabBarIcon: ({ color }) => <Wrench size={24} color={color} />,
+        }}
+      />
+      <Tabs.Screen
+        name="settings"
+        options={{
+          title: 'Settings',
+          tabBarIcon: ({ color }) => <SettingsIcon size={24} color={color} />,
         }}
       />
     </Tabs>

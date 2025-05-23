@@ -1,17 +1,20 @@
 export default {
-    primary: '#3B82F6', // Blue
-    secondary: '#8B5CF6', // Purple
-    accent: '#10B981', // Green
-    background: '#F9FAFB',
+    primary: '#007AFF',
+    secondary: '#5856D6',
+    accent: '#FF2D55',
+    background: '#F2F2F7',
     card: '#FFFFFF',
-    text: '#1F2937',
-    subtext: '#6B7280',
-    border: '#E5E7EB',
-    error: '#EF4444',
-    success: '#10B981',
-    warning: '#F59E0B',
-    info: '#3B82F6',
-    lightGray: '#F3F4F6',
-    mediumGray: '#D1D5DB',
-    darkGray: '#4B5563',
-  };
+    text: '#000000',
+    subtext: '#8E8E93',
+    border: '#C6C6C8',
+    error: '#FF3B30',
+    success: '#34C759',
+    warning: '#FF9500',
+    info: '#5856D6',
+    lightGray: '#E5E5EA',
+    mediumGray: '#C7C7CC',
+    darkGray: '#8E8E93',
+    white: '#FFFFFF',
+    primaryLight: '#E5F2FF',
+    warningLight: '#FFF4E5',
+};

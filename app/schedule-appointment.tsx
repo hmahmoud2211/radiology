@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TextInput, TouchableOpacity, Alert } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Stack } from 'expo-router';
 import { Calendar, Clock, User, FileText, Search, ChevronRight, ChevronLeft, Check, AlertCircle } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import { usePatientStore } from '@/store/patientStore';
 import { useTestsStore } from '@/store/testsStore';
 import Button from '@/components/shared/Button';
-import { Patient, RadiologyTest } from '@/types';
+import { Patient, RadiologyTest, Appointment } from '@/types';
 
 // Steps in the appointment scheduling process
 enum SchedulingStep {
@@ -23,6 +23,7 @@ export default function ScheduleAppointmentScreen() {
   const router = useRouter();
   const { patients, fetchPatients, addPatient, addAppointment } = usePatientStore();
   const { tests, fetchTests } = useTestsStore();
+  const { patientId: preselectedPatientId } = useLocalSearchParams();
 
   // Current step in the scheduling process
   const [currentStep, setCurrentStep] = useState<SchedulingStep>(SchedulingStep.SelectPatientType);
@@ -126,9 +127,25 @@ export default function ScheduleAppointmentScreen() {
     }
   }, [selectedDate]);
 
+  // Preselect patient if patientId param is present
+  useEffect(() => {
+    if (preselectedPatientId && patients.length > 0) {
+      const found = patients.find(p => p.id === preselectedPatientId);
+      if (found) {
+        setSelectedPatient(found);
+        setCurrentStep(SchedulingStep.SelectTest);
+      }
+    }
+  }, [preselectedPatientId, patients]);
+
   const handleSelectPatientType = (isExisting: boolean) => {
     setIsExistingPatient(isExisting);
-    setCurrentStep(isExisting ? SchedulingStep.FindExistingPatient : SchedulingStep.EnterNewPatient);
+    if (isExisting) {
+      setCurrentStep(SchedulingStep.FindExistingPatient);
+    } else {
+      // Navigate to new-patient page, pass returnTo param
+      router.push({ pathname: '/new-patient', params: { returnTo: '/schedule-appointment' } });
+    }
   };
 
   const handleSelectPatient = (patient: Patient) => {
@@ -214,7 +231,8 @@ export default function ScheduleAppointmentScreen() {
     
     try {
       // Create appointment object
-      const newAppointment = {
+      const newAppointment: Appointment = {
+        id: Date.now().toString(), // Temporary ID generation
         patientId: selectedPatient.id,
         patientName: selectedPatient.name,
         testId: selectedTest.id,
@@ -232,7 +250,7 @@ export default function ScheduleAppointmentScreen() {
       Alert.alert(
         'Appointment Scheduled',
         `Your appointment for ${selectedTest.name} has been scheduled for ${selectedDate} at ${selectedTime}.`,
-        [{ text: 'OK', onPress: () => router.push('/all-appointments') }]
+        [{ text: 'OK', onPress: () => router.push('/(tabs)/weekly-schedule') }]
       );
     } catch (error) {
       Alert.alert('Error', 'Failed to schedule appointment');
@@ -432,12 +450,13 @@ export default function ScheduleAppointmentScreen() {
           
           <Text style={styles.requiredFieldsNote}>* Required fields</Text>
           
-          <Button
-            title="Continue"
-            onPress={handleCreateNewPatient}
-            fullWidth
-            style={styles.continueButton}
-          />
+          <View style={styles.continueButton}>
+            <Button
+              title="Continue"
+              onPress={handleCreateNewPatient}
+              fullWidth
+            />
+          </View>
         </ScrollView>
       </View>
     );
@@ -572,7 +591,7 @@ export default function ScheduleAppointmentScreen() {
     }
     
     return (
-      <View style={styles.stepContainer}>
+      <ScrollView style={styles.stepContainer}>
         <Text style={styles.stepTitle}>Confirm Appointment</Text>
         <Text style={styles.stepDescription}>Review and confirm appointment details</Text>
         
@@ -606,31 +625,30 @@ export default function ScheduleAppointmentScreen() {
             <Text style={styles.confirmationLabel}>Special Instructions (Optional)</Text>
             <TextInput
               style={styles.specialInstructionsInput}
-              placeholder="Enter any special instructions or notes"
+              placeholder="Add any special instructions or notes..."
               value={specialInstructions}
               onChangeText={setSpecialInstructions}
               multiline
-              numberOfLines={3}
             />
           </View>
         </View>
         
         <View style={styles.reminderContainer}>
-          <AlertCircle size={20} color={Colors.warning} />
+          <AlertCircle size={20} color={Colors.primary} />
           <Text style={styles.reminderText}>
-            Please arrive 15 minutes before your scheduled appointment time.
+            Please review all details carefully before confirming the appointment.
           </Text>
         </View>
         
-        <Button
-          title="Confirm Appointment"
-          onPress={handleConfirmAppointment}
-          loading={isLoading}
-          disabled={isLoading}
-          fullWidth
-          style={styles.confirmButton}
-        />
-      </View>
+        <View style={styles.confirmButton}>
+          <Button
+            title="Confirm Appointment"
+            onPress={handleConfirmAppointment}
+            loading={isLoading}
+            fullWidth
+          />
+        </View>
+      </ScrollView>
     );
   };
 
@@ -858,7 +876,7 @@ const styles = StyleSheet.create({
     marginBottom: 16,
   },
   continueButton: {
-    marginTop: 8,
+    marginTop: 16,
   },
   testCard: {
     backgroundColor: Colors.card,
@@ -1030,7 +1048,7 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   confirmButton: {
-    marginTop: 8,
+    marginTop: 16,
   },
   backButton: {
     flexDirection: 'row',
