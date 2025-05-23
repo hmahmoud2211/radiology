@@ -12,6 +12,14 @@ import * as Print from 'expo-print';
 import * as Sharing from 'expo-sharing';
 import * as MediaLibrary from 'expo-media-library';
 import * as ImagePicker from 'expo-image-picker';
+import ICD11AutocompleteInput from '@/components/shared/ICD11AutocompleteInput';
+import PatientInfoSection from '../components/shared/PatientInfoSection';
+import ExaminationDetailsSection from '../components/shared/ExaminationDetailsSection';
+import TechniqueSection from '../components/shared/TechniqueSection';
+import FindingsSection from '../components/shared/FindingsSection';
+import ImpressionSection from '../components/shared/ImpressionSection';
+import RecommendationsSection from '../components/shared/RecommendationsSection';
+import RadiologistInfoSection from '../components/shared/RadiologistInfoSection';
 
 // Simulate DICOM/media upload (replace with real logic as needed)
 type DicomUploaderProps = {
@@ -77,6 +85,7 @@ export default function RadiologyReportPage() {
     reportDate: study?.reportDate || '',
     signature: '',
     images: study?.images || [],
+    recommendations: '',
   });
 
   // Autosave draft on form change
@@ -311,7 +320,7 @@ export default function RadiologyReportPage() {
     }
   };
 
-  if (!patient || !study) {
+  if (!patient && !study) {
     return (
       <View style={styles.container}>
         <Text style={styles.placeholderTitle}>No report available</Text>
@@ -321,9 +330,14 @@ export default function RadiologyReportPage() {
     );
   }
 
+  // Always show the formatted report if either patient or study exists
   return (
     <KeyboardAvoidingView style={{ flex: 1 }} behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
-      <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
+      <ScrollView
+        style={styles.container}
+        contentContainerStyle={[styles.contentContainer, { paddingBottom: 320 }]}
+        keyboardShouldPersistTaps="handled"
+      >
         {/* Header Actions */}
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={{ marginBottom: 16 }}>
           <View style={styles.headerActions}>
@@ -338,133 +352,40 @@ export default function RadiologyReportPage() {
         {isDraft && <Text style={styles.draftText}>Draft saved...</Text>}
         {aiError ? <Text style={styles.errorText}>{aiError}</Text> : null}
         {/* Patient & Scan Info */}
-        <View style={styles.headerCard}>
-          <Text style={styles.patientName}>{patient.name}</Text>
-          <View style={styles.infoStack}>
-            <View style={styles.infoRowStack}>
-              <Text style={styles.infoLabelStack}>ID/MRN:</Text>
-              <Text style={styles.infoValueStack}>{patient.patientId}</Text>
-            </View>
-            <View style={styles.infoRowStack}>
-              <Text style={styles.infoLabelStack}>Referring Physician:</Text>
-              <Text style={styles.infoValueStack}>{study.referringPhysician}</Text>
-            </View>
-            <View style={styles.infoRowStack}>
-              <Text style={styles.infoLabelStack}>Age:</Text>
-              <Text style={styles.infoValueStack}>{patient.age}</Text>
-            </View>
-            <View style={styles.infoRowStack}>
-              <Text style={styles.infoLabelStack}>Gender:</Text>
-              <Text style={styles.infoValueStack}>{patient.gender}</Text>
-            </View>
-            <View style={styles.infoRowStack}>
-              <Text style={styles.infoLabelStack}>Scan Type:</Text>
-              <Text style={styles.infoValueStack}>{study.modality} {study.bodyPart}</Text>
-            </View>
-            <View style={styles.infoRowStack}>
-              <Text style={styles.infoLabelStack}>Date of Scan:</Text>
-              <Text style={styles.infoValueStack}>{study.studyDate}</Text>
-            </View>
-            <View style={styles.infoRowStack}>
-              <Text style={styles.infoLabelStack}>Machine/Room:</Text>
-              <Text style={styles.infoValueStack}>{study.room || 'N/A'}</Text>
-            </View>
-          </View>
-        </View>
-        {/* Clinical Indication */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Clinical Indication</Text>
-          <TextInput
-            style={styles.input}
-            value={form.clinicalIndication}
-            onChangeText={v => handleInput('clinicalIndication', v)}
-            placeholder="Enter reason for scan"
-            multiline
-          />
-        </View>
-        {/* Examination Details */}
-        <TouchableOpacity style={styles.collapseHeader} onPress={() => setShowTechDetails(v => !v)}>
-          <Text style={styles.collapseTitle}>Examination Details</Text>
-          {showTechDetails ? <ChevronUp size={18} color={Colors.primary} /> : <ChevronDown size={18} color={Colors.primary} />}
-        </TouchableOpacity>
-        {showTechDetails && (
-          <View style={styles.section}>
-            <View style={styles.infoRowStack}>
-              <Text style={styles.infoLabelStack}>Modality:</Text>
-              <Text style={styles.infoValueStack}>{form.modality}</Text>
-            </View>
-            <View style={styles.infoRowStack}>
-              <Text style={styles.infoLabelStack}>Contrast:</Text>
-              <Text style={styles.infoValueStack}>{form.contrast}</Text>
-            </View>
-            <View style={styles.infoRowStack}>
-              <Text style={styles.infoLabelStack}>Body Region:</Text>
-              <Text style={styles.infoValueStack}>{form.bodyRegion}</Text>
-            </View>
-            <View style={styles.infoRowStack}>
-              <Text style={styles.infoLabelStack}>Protocol:</Text>
-              <Text style={styles.infoValueStack}>{form.protocol}</Text>
-            </View>
-          </View>
-        )}
-        {/* Findings */}
-        <TouchableOpacity style={styles.collapseHeader} onPress={() => setShowFindings(v => !v)}>
-          <Text style={styles.collapseTitle}>Findings</Text>
-          {showFindings ? <ChevronUp size={18} color={Colors.primary} /> : <ChevronDown size={18} color={Colors.primary} />}
-        </TouchableOpacity>
-        {showFindings && (
-          <View style={styles.section}>
-            <TextInput
-              style={[styles.input, { minHeight: 100 }]}
-              value={form.findings}
-              onChangeText={v => handleInput('findings', v)}
-              placeholder="Enter detailed findings (rich text supported)"
-              multiline
-            />
-          </View>
-        )}
-        {/* Impression */}
-        <TouchableOpacity style={styles.collapseHeader} onPress={() => setShowImpression(v => !v)}>
-          <Text style={styles.collapseTitle}>Impression</Text>
-          {showImpression ? <ChevronUp size={18} color={Colors.primary} /> : <ChevronDown size={18} color={Colors.primary} />}
-        </TouchableOpacity>
-        {showImpression && (
-          <View style={styles.impressionSection}>
-            <TextInput
-              style={[styles.input, { minHeight: 60, fontWeight: 'bold' }]}
-              value={form.impression}
-              onChangeText={v => handleInput('impression', v)}
-              placeholder="Enter impression/summary (required)"
-              multiline
-            />
-          </View>
-        )}
-        {/* Radiologist Info */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Radiologist Info</Text>
-          <TextInput
-            style={styles.input}
-            value={form.radiologist}
-            onChangeText={v => handleInput('radiologist', v)}
-            placeholder="Radiologist Name"
-          />
-          <TextInput
-            style={styles.input}
-            value={form.reportDate}
-            onChangeText={v => handleInput('reportDate', v)}
-            placeholder="Date (YYYY-MM-DD)"
-          />
-          <TouchableOpacity style={styles.signatureRow} onPress={handleUploadSignature}>
-            <FileText size={20} color={Colors.primary} />
-            <Text style={styles.signatureText}>Upload E-signature</Text>
-          </TouchableOpacity>
-          {signatureUri && (
-            <Image
-              source={{ uri: signatureUri }}
-              style={{ width: 120, height: 40, marginTop: 8, resizeMode: 'contain' }}
-            />
-          )}
-        </View>
+        <PatientInfoSection patient={patient || { id: '', name: '-', age: 0, gender: 'Other', dob: '-', patientId: '-', contactNumber: '-', email: '', address: '', insuranceInfo: '', medicalHistory: '', allergies: [], lastVisit: '', upcomingAppointment: '' }} />
+        <ExaminationDetailsSection study={study || { id: '', patientId: '', patientName: '-', studyDate: '-', modality: 'X-Ray', bodyPart: '-', accessionNumber: '-', referringPhysician: '-', status: 'Scheduled', reportStatus: 'Pending' }} />
+        <TechniqueSection
+          modality={form.modality}
+          value={form.protocol}
+          onChange={v => handleInput('protocol', v)}
+        />
+        <FindingsSection
+          scanType={form.modality}
+          value={form.findings}
+          onSelect={(entry: any) => {
+            if (typeof entry === 'string') handleInput('findings', entry);
+            else handleInput('findings', `${entry.code} - ${entry.name}: ${entry.description}`);
+          }}
+        />
+        <ImpressionSection
+          value={form.impression}
+          onSelect={(entry: any) => {
+            if (typeof entry === 'string') handleInput('impression', entry);
+            else handleInput('impression', `${entry.code} - ${entry.name}: ${entry.description}`);
+          }}
+        />
+        <RecommendationsSection
+          value={form.recommendations}
+          onChange={(v: string) => handleInput('recommendations', v)}
+        />
+        <RadiologistInfoSection
+          radiologist={form.radiologist}
+          date={form.reportDate}
+          signatureUri={signatureUri}
+          onRadiologistChange={(v: string) => handleInput('radiologist', v)}
+          onDateChange={(v: string) => handleInput('reportDate', v)}
+          onUploadSignature={handleUploadSignature}
+        />
         {/* DICOM/Media Attachments */}
         <DicomUploader images={form.images.filter(isMedicalImage)} onUpload={handleImageUpload} onView={handleViewImage} />
         <View style={{ alignItems: 'center', marginVertical: 24 }}>

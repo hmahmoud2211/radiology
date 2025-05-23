@@ -253,3 +253,9 @@ export type Patient = {
     // Additional Information
     notes?: string;
   }
+
+  export type ICD11Entry = {
+    code: string;
+    name: string;
+    description: string;
+  };

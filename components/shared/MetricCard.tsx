@@ -37,7 +37,7 @@ const getBarColors = (count: number, highlightIndex: number) =>
   );
 
 const chartWidth = Math.min(Dimensions.get('window').width * 0.85, 340);
-const chartHeight = 120;
+const chartHeight = 180;
 
 const chartConfig = {
   backgroundColor: '#FFFFFF',
@@ -97,6 +97,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
             borderRadius: 8,
             backgroundColor: '#FFFFFF',
             padding: 12,
+            paddingBottom: 24,
           }}
           flatColor={true}
         />
@@ -129,6 +130,7 @@ export const MetricCard: React.FC<MetricCardProps> = ({
           borderRadius: 8,
           backgroundColor: '#FFFFFF',
           padding: 12,
+          paddingBottom: 24,
         }}
       />
     );

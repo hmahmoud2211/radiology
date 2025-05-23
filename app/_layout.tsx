@@ -7,6 +7,7 @@ import { Platform, useColorScheme, View } from "react-native";
 import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import React from 'react';
 import { ThemeProvider } from '@react-navigation/native';
+import { Provider as PaperProvider } from 'react-native-paper';
 
 import { ErrorBoundary } from "./error-boundary";
 import { useAuthStore } from '../store/authStore';
@@ -54,29 +55,31 @@ export default function RootLayout() {
   }
 
   return (
-    <View style={{ flex: 1 }}>
-      <GestureHandlerRootView style={{ flex: 1 }}>
-        <ErrorBoundary>
-          <ThemeProvider value={theme === 'dark' ? darkTheme : lightTheme}>
-            <Stack
-              screenOptions={{
-                headerStyle: {
-                  backgroundColor: theme === 'dark' ? darkTheme.colors.card : lightTheme.colors.card,
-                },
-                headerTintColor: theme === 'dark' ? darkTheme.colors.text : lightTheme.colors.text,
-                headerTitleStyle: {
-                  fontWeight: 'bold',
-                },
-              }}
-            >
-              <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-              <Stack.Screen name="modal" options={{ presentation: "modal" }} />
-              <Stack.Screen name="login" options={{ headerShown: false }} />
-            </Stack>
-          </ThemeProvider>
-        </ErrorBoundary>
-      </GestureHandlerRootView>
-    </View>
+    <PaperProvider>
+      <View style={{ flex: 1 }}>
+        <GestureHandlerRootView style={{ flex: 1 }}>
+          <ErrorBoundary>
+            <ThemeProvider value={theme === 'dark' ? darkTheme : lightTheme}>
+              <Stack
+                screenOptions={{
+                  headerStyle: {
+                    backgroundColor: theme === 'dark' ? darkTheme.colors.card : lightTheme.colors.card,
+                  },
+                  headerTintColor: theme === 'dark' ? darkTheme.colors.text : lightTheme.colors.text,
+                  headerTitleStyle: {
+                    fontWeight: 'bold',
+                  },
+                }}
+              >
+                <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
+                <Stack.Screen name="modal" options={{ presentation: "modal" }} />
+                <Stack.Screen name="login" options={{ headerShown: false }} />
+              </Stack>
+            </ThemeProvider>
+          </ErrorBoundary>
+        </GestureHandlerRootView>
+      </View>
+    </PaperProvider>
   );
 }
 

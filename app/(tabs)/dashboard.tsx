@@ -40,6 +40,7 @@ import { MetricCard } from '@/components/shared/MetricCard';
 import { dashboardMetrics } from '@/mocks/metrics';
 import { NotificationBanner } from '@/components/NotificationBanner';
 import { useEquipmentStore } from '@/store/equipmentStore';
+import { formatAppointmentRemaining, formatDuration } from '@/utils/timeUtils';
 
 type PatientQueue = {
   waiting: Study[];
@@ -370,7 +371,8 @@ export default function DashboardScreen() {
     const actualDuration = endTime 
       ? (endTime.getTime() - startTime.getTime()) / 60000 
       : (currentTime.getTime() - startTime.getTime()) / 60000;
-    
+
+    const remaining = Math.round(estimatedDuration - actualDuration);
     const progress = Math.min((actualDuration / estimatedDuration) * 100, 100);
     const isDelayed = actualDuration > estimatedDuration;
 
@@ -379,7 +381,9 @@ export default function DashboardScreen() {
         <View style={styles.timelineHeader}>
           <Text style={styles.timelineTitle}>Progress</Text>
           <Text style={styles.timelineDuration}>
-            {Math.round(actualDuration)}/{estimatedDuration} min
+            {remaining >= 0
+              ? `${remaining} min remaining`
+              : `Overdue by ${Math.abs(remaining)} min`}
           </Text>
         </View>
         <View style={styles.progressBarContainer}>
@@ -503,7 +507,19 @@ export default function DashboardScreen() {
 
   const renderPatientCard = (study: Study) => {
     const patient = getPatientInfo(study.patientId);
-    const waitingTime = getWaitingTime(study.studyDate);
+    let waitingTime = '';
+    if (study.status && study.status.toLowerCase() === 'scheduled') {
+      let timeString = study.startTime;
+      if (!timeString) {
+        const d = new Date(study.studyDate);
+        timeString = d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+      }
+      // Validate timeString: should match HH:MM AM/PM
+      const validTime = /\d{1,2}:\d{2} (AM|PM)/.test(timeString);
+      waitingTime = validTime ? formatAppointmentRemaining(study.studyDate.split('T')[0], timeString) : '--';
+    } else {
+      waitingTime = getWaitingTime(study.studyDate);
+    }
     const isUrgent = study.priority === 'STAT';
     const hasAllergies = patient?.allergies && patient.allergies.length > 0;
     const isPediatric = patient?.age && patient.age < 18;

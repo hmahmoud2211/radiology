@@ -56,6 +56,16 @@ export default function PatientDocumentsPage() {
               <Text style={styles.reportTitle}>Report</Text>
               <Text style={styles.reportText}><Text style={{ fontWeight: 'bold' }}>Findings:</Text> {study.findings || '-'}</Text>
               <Text style={styles.reportText}><Text style={{ fontWeight: 'bold' }}>Impression:</Text> {study.impression || '-'}</Text>
+              <TouchableOpacity 
+                style={styles.viewReportButton}
+                onPress={() => router.push({ 
+                  pathname: '/radiology-report', 
+                  params: { patientId: study.patientId, studyId: study.id }
+                })}
+              >
+                <FileText size={16} color="white" style={{ marginRight: 6 }} />
+                <Text style={styles.viewReportButtonText}>View Full Report</Text>
+              </TouchableOpacity>
             </View>
           ) : (
             <Text style={styles.noReportText}>No report available for this study.</Text>
@@ -84,4 +94,19 @@ const styles = StyleSheet.create({
   placeholderText: { fontSize: 16, color: Colors.subtext, marginBottom: 18, textAlign: 'center' },
   backButton: { marginTop: 16, alignSelf: 'center', padding: 12, backgroundColor: Colors.primary, borderRadius: 8 },
   backButtonText: { color: 'white', fontWeight: '600' },
+  viewReportButton: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.primary,
+    paddingVertical: 8,
+    paddingHorizontal: 12,
+    borderRadius: 6,
+    marginTop: 12,
+    alignSelf: 'flex-start',
+  },
+  viewReportButtonText: {
+    color: 'white',
+    fontWeight: '600',
+    fontSize: 14,
+  },
 }); 

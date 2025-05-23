@@ -1,4 +1,16 @@
 import { Patient } from '@/types';
+import { appointments } from './appointments';
+
+// Helper to get the next appointment for a patient
+function getNextAppointmentDate(patientId: string): string | undefined {
+  const now = new Date();
+  const futureAppointments = appointments.filter(
+    (a) => a.patientId === patientId && new Date(a.date) >= now
+  );
+  if (futureAppointments.length === 0) return undefined;
+  futureAppointments.sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+  return futureAppointments[0].date;
+}
 
 export const patients: Patient[] = [
   {
@@ -15,7 +27,7 @@ export const patients: Patient[] = [
     medicalHistory: 'Hypertension, Type 2 Diabetes',
     allergies: ['Penicillin', 'Shellfish'],
     lastVisit: '2023-11-15',
-    upcomingAppointment: '2023-12-10',
+    upcomingAppointment: getNextAppointmentDate('1'),
   },
   {
     id: '2',
@@ -31,7 +43,7 @@ export const patients: Patient[] = [
     medicalHistory: 'Asthma',
     allergies: ['Latex'],
     lastVisit: '2023-10-05',
-    upcomingAppointment: '2023-12-15',
+    upcomingAppointment: getNextAppointmentDate('2'),
   },
   {
     id: '3',
@@ -47,7 +59,7 @@ export const patients: Patient[] = [
     medicalHistory: 'Coronary Artery Disease, Osteoarthritis',
     allergies: ['Sulfa Drugs', 'Iodine'],
     lastVisit: '2023-11-28',
-    upcomingAppointment: '2023-12-20',
+    upcomingAppointment: getNextAppointmentDate('3'),
   },
   {
     id: '4',
@@ -63,7 +75,7 @@ export const patients: Patient[] = [
     medicalHistory: 'Migraine',
     allergies: [],
     lastVisit: '2023-09-12',
-    upcomingAppointment: '2023-12-05',
+    upcomingAppointment: getNextAppointmentDate('4'),
   },
   {
     id: '5',
@@ -79,6 +91,6 @@ export const patients: Patient[] = [
     medicalHistory: 'Hyperlipidemia, GERD',
     allergies: ['NSAIDs'],
     lastVisit: '2023-10-20',
-    upcomingAppointment: '2023-12-12',
+    upcomingAppointment: getNextAppointmentDate('5'),
   },
 ];

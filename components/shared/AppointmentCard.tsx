@@ -1,13 +1,14 @@
 import React from 'react';
 import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { Calendar, Clock, User, FileText } from 'lucide-react-native';
+import { User, Calendar, Clock, FileText } from 'lucide-react-native';
 import Colors from '@/constants/colors';
 import { Appointment } from '@/types';
+import { formatAppointmentTime } from '@/utils/timeUtils';
 
-type AppointmentCardProps = {
+interface AppointmentCardProps {
   appointment: Appointment;
   onPress: (appointment: Appointment) => void;
-};
+}
 
 const AppointmentCard: React.FC<AppointmentCardProps> = ({ appointment, onPress }) => {
   const getStatusColor = () => {
@@ -29,6 +30,8 @@ const AppointmentCard: React.FC<AppointmentCardProps> = ({ appointment, onPress 
     }
   };
 
+  const formattedTime = formatAppointmentTime(appointment.time);
+
   return (
     <TouchableOpacity style={styles.card} onPress={() => onPress(appointment)}>
       <View style={styles.header}>
@@ -49,7 +52,9 @@ const AppointmentCard: React.FC<AppointmentCardProps> = ({ appointment, onPress 
         </View>
         <View style={styles.infoRow}>
           <Clock size={16} color={Colors.darkGray} />
-          <Text style={styles.infoText}>{appointment.time}</Text>
+          <Text style={styles.infoText}>
+            {appointment.time} ({formattedTime})
+          </Text>
         </View>
         {appointment.notes && (
           <View style={styles.infoRow}>
@@ -66,51 +71,51 @@ const AppointmentCard: React.FC<AppointmentCardProps> = ({ appointment, onPress 
 
 const styles = StyleSheet.create({
   card: {
-    backgroundColor: Colors.card,
+    backgroundColor: Colors.white,
     borderRadius: 12,
     padding: 16,
-    marginBottom: 16,
+    marginBottom: 12,
     shadowColor: '#000',
     shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.05,
-    shadowRadius: 3,
-    elevation: 2,
+    shadowOpacity: 0.1,
+    shadowRadius: 4,
+    elevation: 3,
   },
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
     alignItems: 'center',
-    marginBottom: 16,
+    marginBottom: 12,
   },
   testName: {
     fontSize: 16,
-    fontWeight: '700',
+    fontWeight: '600',
     color: Colors.text,
     flex: 1,
-    marginRight: 8,
+    marginRight: 12,
   },
   statusBadge: {
     paddingHorizontal: 8,
     paddingVertical: 4,
-    borderRadius: 4,
+    borderRadius: 12,
   },
   statusText: {
-    color: 'white',
+    color: Colors.white,
     fontSize: 12,
-    fontWeight: '500',
+    fontWeight: '600',
   },
   infoContainer: {
-    marginBottom: 8,
+    gap: 8,
   },
   infoRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    marginBottom: 8,
+    gap: 8,
   },
   infoText: {
-    marginLeft: 8,
     fontSize: 14,
     color: Colors.text,
+    flex: 1,
   },
 });
 

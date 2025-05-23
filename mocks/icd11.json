@@ -1,0 +1,7 @@
+[
+  {"code": "2B81.0", "name": "Ischemic stroke", "description": "Stroke due to blockage of a blood vessel"},
+  {"code": "2B70.0", "name": "Intracerebral hemorrhage", "description": "Bleeding within the brain"},
+  {"code": "XA8F5", "name": "Lung mass", "description": "Suspicious mass detected in lung"},
+  {"code": "1A00.0", "name": "Cholera due to Vibrio cholerae 01, biovar cholerae", "description": "A type of cholera infection"},
+  {"code": "BA40.0", "name": "Acute appendicitis", "description": "Sudden inflammation of the appendix"}
+] 

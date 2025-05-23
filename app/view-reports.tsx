@@ -66,15 +66,41 @@ export default function ViewReportsScreen() {
                 <TouchableOpacity
                   key={study.id}
                   style={styles.reportCard}
-                  onPress={() => {
-                    selectStudy(study.id);
-                    router.push('/radiology-report');
-                  }}
                 >
                   <Text style={styles.reportTitle}>{study.modality} - {study.bodyPart}</Text>
                   <Text style={styles.reportDate}>{study.studyDate}</Text>
                   <Text style={styles.reportStatus}>Status: {study.reportStatus || study.status}</Text>
-                  <Text style={styles.reportLink}>View Report</Text>
+                  {(study.reportStatus === 'Final' || study.findings || study.impression) ? (
+                    <TouchableOpacity
+                      style={styles.viewReportButton}
+                      onPress={() => {
+                        selectStudy(study.id);
+                        router.push({
+                          pathname: '/radiology-report',
+                          params: { patientId: selectedPatient.id, studyId: study.id }
+                        });
+                      }}
+                    >
+                      <Text style={styles.viewReportButtonText}>View Report</Text>
+                    </TouchableOpacity>
+                  ) : (
+                    <TouchableOpacity
+                      style={[styles.viewReportButton, { backgroundColor: Colors.warning }]}
+                      onPress={() => {
+                        selectStudy(study.id);
+                        router.push({
+                          pathname: '/radiology-report',
+                          params: { 
+                            patientId: selectedPatient.id, 
+                            studyId: study.id,
+                            mode: 'create'
+                          }
+                        });
+                      }}
+                    >
+                      <Text style={styles.viewReportButtonText}>Generate Report</Text>
+                    </TouchableOpacity>
+                  )}
                 </TouchableOpacity>
               ))
             ) : (
@@ -116,5 +142,20 @@ const styles = StyleSheet.create({
   reportTitle: { fontSize: 15, fontWeight: '600', color: Colors.primary },
   reportDate: { fontSize: 13, color: Colors.subtext, marginBottom: 4 },
   reportStatus: { fontSize: 13, color: Colors.info, marginBottom: 4 },
-  reportLink: { color: Colors.primary, fontWeight: '600', marginTop: 4 },
+  viewReportButton: {
+    backgroundColor: Colors.primary,
+    paddingVertical: 8,
+    paddingHorizontal: 16,
+    borderRadius: 6,
+    marginTop: 8,
+    alignSelf: 'flex-start',
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+  },
+  viewReportButtonText: {
+    color: 'white',
+    fontWeight: '600',
+    fontSize: 14,
+  },
 }); 
