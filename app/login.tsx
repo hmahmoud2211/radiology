@@ -11,9 +11,10 @@ import {
   ActivityIndicator,
 } from 'react-native';
 import { useRouter } from 'expo-router';
-import { useAuthStore } from '@/store/authStore';
+import { useAuthStore } from '../store/authStore';
 import * as LocalAuthentication from 'expo-local-authentication';
 import { Ionicons } from '@expo/vector-icons';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 
 export default function LoginScreen() {
   const router = useRouter();
@@ -45,20 +46,64 @@ export default function LoginScreen() {
     try {
       const { success } = await LocalAuthentication.authenticateAsync({
         promptMessage: 'Login with biometrics',
+        fallbackLabel: 'Use password',
+        cancelLabel: 'Cancel',
       });
       
       if (success) {
-        // TODO: Implement biometric login logic
-        Alert.alert('Success', 'Biometric authentication successful');
+        const storedToken = await AsyncStorage.getItem('auth_token');
+        if (storedToken) {
+          // Verify token with backend
+          const response = await fetch('http://192.168.1.9:8000/auth/verify-token', {
+            method: 'POST',
+            headers: {
+              'Authorization': `Bearer ${storedToken}`,
+            },
+          });
+
+          if (response.ok) {
+            const data = await response.json();
+            await login(data.user.email, '', true); // Password not needed for biometric login
+          } else {
+            Alert.alert('Error', 'Biometric login failed. Please login with password.');
+          }
+        } else {
+          Alert.alert('Error', 'No stored credentials found. Please login with password first.');
+        }
       }
     } catch (error) {
       Alert.alert('Error', 'Biometric authentication failed');
     }
   };
 
-  const handleForgotPassword = () => {
-    // TODO: Implement forgot password flow
-    Alert.alert('Forgot Password', 'Password reset functionality coming soon');
+  const handleForgotPassword = async () => {
+    if (!email) {
+      Alert.alert('Error', 'Please enter your email address first');
+      return;
+    }
+
+    try {
+      const response = await fetch('http://192.168.1.9:8000/auth/forgot-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email }),
+      });
+
+      if (response.ok) {
+        Alert.alert(
+          'Success',
+          'Password reset instructions have been sent to your email',
+          [{ text: 'OK' }]
+        );
+      } else {
+        const error = await response.json();
+        Alert.alert('Error', error.detail || 'Failed to process password reset request');
+      }
+    } catch (error) {
+      Alert.alert('Error', 'Failed to process password reset request');
+    }
   };
 
   return (

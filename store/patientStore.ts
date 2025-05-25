@@ -8,8 +8,8 @@ import { TIME_SLOTS } from '@/app/(tabs)/weekly-schedule';
 
 interface PatientState {
   patients: Patient[];
-  appointments: Appointment[];
   selectedPatient: Patient | null;
+  appointments: Appointment[];
   isLoading: boolean;
   error: string | null;
   
@@ -17,14 +17,19 @@ interface PatientState {
   fetchPatients: () => Promise<void>;
   fetchAppointments: () => Promise<void>;
   addPatient: (patient: Omit<Patient, 'id'>) => Promise<Patient>;
-  updatePatient: (id: string, updates: Partial<Patient>) => Promise<void>;
+  updatePatient: (id: string, patient: Partial<Patient>) => Promise<Patient>;
   deletePatient: (id: string) => Promise<void>;
-  selectPatient: (id: string | null) => void;
+  selectPatient: (id: string) => void;
   addAppointment: (appointment: Omit<Appointment, 'id'>) => Promise<void>;
   updateAppointment: (id: string, updates: Partial<Appointment>) => Promise<void>;
   deleteAppointment: (id: string) => Promise<void>;
   getPatientAppointments: (patientId: string) => Appointment[];
 }
+
+type PatientStore = {
+  set: (fn: (state: PatientState) => Partial<PatientState>) => void;
+  get: () => PatientState;
+};
 
 // Helper to normalize date to YYYY-MM-DD
 function normalizeDate(input: string | Date): string {
@@ -83,145 +88,117 @@ function normalizeTime(input: string): string {
   return formatted;
 }
 
-export const usePatientStore = create<PatientState>()(
-  persist(
-    (set, get) => ({
-      patients: [],
-      appointments: [],
-      selectedPatient: null,
-      isLoading: false,
-      error: null,
+export const usePatientStore = create<PatientState>((set, get) => ({
+  patients: [],
+  selectedPatient: null,
+  appointments: [],
+  isLoading: false,
+  error: null,
 
-      fetchPatients: async () => {
-        set({ isLoading: true, error: null });
-        try {
-          // In a real app, this would be an API call
-          // For now, we'll use mock data
-          set({ patients: mockPatients, isLoading: false });
-        } catch (error) {
-          set({ error: 'Failed to fetch patients', isLoading: false });
-        }
-      },
-
-      fetchAppointments: async () => {
-        set({ isLoading: true, error: null });
-        try {
-          // In a real app, this would be an API call
-          // For now, just keep current state (persisted by zustand)
-          set((state) => ({ appointments: state.appointments, isLoading: false }));
-        } catch (error) {
-          set({ error: 'Failed to fetch appointments', isLoading: false });
-        }
-      },
-
-      addPatient: async (patient) => {
-        set({ isLoading: true, error: null });
-        try {
-          const newPatient: Patient = {
-            ...patient,
-            id: Date.now().toString(),
-          };
-          set((state) => ({
-            patients: [...state.patients, newPatient],
-            isLoading: false,
-          }));
-          return newPatient;
-        } catch (error) {
-          set({ error: 'Failed to add patient', isLoading: false });
-          throw error;
-        }
-      },
-
-      updatePatient: async (id, updates) => {
-        set({ isLoading: true, error: null });
-        try {
-          set((state) => ({
-            patients: state.patients.map((patient) =>
-              patient.id === id ? { ...patient, ...updates } : patient
-            ),
-            isLoading: false,
-          }));
-        } catch (error) {
-          set({ error: 'Failed to update patient', isLoading: false });
-        }
-      },
-
-      deletePatient: async (id) => {
-        set({ isLoading: true, error: null });
-        try {
-          set((state) => ({
-            patients: state.patients.filter((patient) => patient.id !== id),
-            isLoading: false,
-          }));
-        } catch (error) {
-          set({ error: 'Failed to delete patient', isLoading: false });
-        }
-      },
-
-      selectPatient: (id) => {
-        if (id === null) {
-          set({ selectedPatient: null });
-          return;
-        }
-        
-        const patient = get().patients.find((p) => p.id === id) || null;
-        set({ selectedPatient: patient });
-      },
-
-      addAppointment: async (appointment) => {
-        set({ isLoading: true, error: null });
-        try {
-          // Normalize date and time
-          const normalizedDate = normalizeDate(appointment.date);
-          const normalizedTime = normalizeTime(appointment.time);
-          const newAppointment: Appointment = {
-            ...appointment,
-            id: Date.now().toString(),
-            date: normalizedDate,
-            time: normalizedTime,
-          };
-          set((state) => ({
-            appointments: [...state.appointments, newAppointment],
-            isLoading: false,
-          }));
-        } catch (error) {
-          set({ error: 'Failed to add appointment', isLoading: false });
-        }
-      },
-
-      updateAppointment: async (id, updates) => {
-        set({ isLoading: true, error: null });
-        try {
-          set((state) => ({
-            appointments: state.appointments.map((appointment) =>
-              appointment.id === id ? { ...appointment, ...updates } : appointment
-            ),
-            isLoading: false,
-          }));
-        } catch (error) {
-          set({ error: 'Failed to update appointment', isLoading: false });
-        }
-      },
-
-      deleteAppointment: async (id) => {
-        set({ isLoading: true, error: null });
-        try {
-          set((state) => ({
-            appointments: state.appointments.filter((appointment) => appointment.id !== id),
-            isLoading: false,
-          }));
-        } catch (error) {
-          set({ error: 'Failed to delete appointment', isLoading: false });
-        }
-      },
-
-      getPatientAppointments: (patientId) => {
-        return get().appointments.filter((appointment) => appointment.patientId === patientId);
-      },
-    }),
-    {
-      name: 'patient-storage',
-      storage: createJSONStorage(() => AsyncStorage),
+  fetchPatients: async () => {
+    set({ isLoading: true, error: null });
+    try {
+      // In a real app, this would be an API call
+      // For now, we'll use mock data
+      set({ patients: mockPatients, isLoading: false });
+    } catch (error) {
+      set({ error: 'Failed to fetch patients', isLoading: false });
     }
-  )
-);
+  },
+
+  fetchAppointments: async () => {
+    set({ isLoading: true, error: null });
+    try {
+      // In a real app, this would be an API call
+      // For now, just keep current state (persisted by zustand)
+      set((state) => ({ appointments: state.appointments, isLoading: false }));
+    } catch (error) {
+      set({ error: 'Failed to fetch appointments', isLoading: false });
+    }
+  },
+
+  addPatient: async (patient: Omit<Patient, 'id'>) => {
+    const newPatient: Patient = {
+      ...patient,
+      id: Math.random().toString(36).substr(2, 9),
+    };
+    set((state) => ({
+      patients: [...state.patients, newPatient],
+    }));
+    return newPatient;
+  },
+
+  updatePatient: async (id: string, patient: Partial<Patient>) => {
+    const updatedPatient: Patient = {
+      ...get().patients.find((p) => p.id === id)!,
+      ...patient,
+      id,
+    };
+    set((state) => ({
+      patients: state.patients.map((p) => (p.id === id ? updatedPatient : p)),
+    }));
+    return updatedPatient;
+  },
+
+  deletePatient: async (id: string) => {
+    set((state) => ({
+      patients: state.patients.filter((p) => p.id !== id),
+    }));
+  },
+
+  selectPatient: (id: string) => {
+    const patient = get().patients.find((p) => p.id === id);
+    set({ selectedPatient: patient || null });
+  },
+
+  addAppointment: async (appointment: Omit<Appointment, 'id'>) => {
+    set({ isLoading: true, error: null });
+    try {
+      // Normalize date and time
+      const normalizedDate = normalizeDate(appointment.date);
+      const normalizedTime = normalizeTime(appointment.time);
+      const newAppointment: Appointment = {
+        ...appointment,
+        id: Date.now().toString(),
+        date: normalizedDate,
+        time: normalizedTime,
+      };
+      set((state: PatientState) => ({
+        appointments: [...state.appointments, newAppointment],
+        isLoading: false,
+      }));
+    } catch (error) {
+      set({ error: 'Failed to add appointment', isLoading: false });
+    }
+  },
+
+  updateAppointment: async (id: string, updates: Partial<Appointment>) => {
+    set({ isLoading: true, error: null });
+    try {
+      set((state: PatientState) => ({
+        appointments: state.appointments.map((appointment) =>
+          appointment.id === id ? { ...appointment, ...updates } : appointment
+        ),
+        isLoading: false,
+      }));
+    } catch (error) {
+      set({ error: 'Failed to update appointment', isLoading: false });
+    }
+  },
+
+  deleteAppointment: async (id: string) => {
+    set({ isLoading: true, error: null });
+    try {
+      set((state: PatientState) => ({
+        appointments: state.appointments.filter((appointment) => appointment.id !== id),
+        isLoading: false,
+      }));
+    } catch (error) {
+      set({ error: 'Failed to delete appointment', isLoading: false });
+    }
+  },
+
+  getPatientAppointments: (patientId: string) => {
+    return get().appointments.filter((a) => a.patientId === patientId);
+  },
+}));

@@ -1,80 +1,70 @@
-from sqlalchemy.orm import Session
 from typing import List, Optional
+from backend.models.tortoise_models import MaintenanceRecord, MaintenanceRecord_Pydantic, MaintenanceRecordIn_Pydantic
+from tortoise.exceptions import DoesNotExist
 from datetime import date
-from ..models.maintenance import MaintenanceRecord
-from ..schemas.maintenance import MaintenanceRecordCreate, MaintenanceRecordUpdate
 
-def get_maintenance_record(db: Session, maintenance_id: int) -> Optional[MaintenanceRecord]:
-    return db.query(MaintenanceRecord).filter(MaintenanceRecord.maintenance_id == maintenance_id).first()
+async def create_maintenance_record(maintenance: MaintenanceRecordIn_Pydantic) -> MaintenanceRecord_Pydantic:
+    maintenance_obj = await MaintenanceRecord.create(**maintenance.dict(exclude_unset=True))
+    return await MaintenanceRecord_Pydantic.from_tortoise_orm(maintenance_obj)
 
-def get_maintenance_records(
-    db: Session,
+async def get_maintenance_record(maintenance_id: int) -> Optional[MaintenanceRecord_Pydantic]:
+    try:
+        maintenance = await MaintenanceRecord.get(id=maintenance_id)
+        return await MaintenanceRecord_Pydantic.from_tortoise_orm(maintenance)
+    except DoesNotExist:
+        return None
+
+async def get_all_maintenance_records(
     skip: int = 0,
     limit: int = 100,
     equipment_id: Optional[int] = None,
     status: Optional[str] = None,
     start_date: Optional[date] = None,
     end_date: Optional[date] = None
-) -> List[MaintenanceRecord]:
-    query = db.query(MaintenanceRecord)
+) -> List[MaintenanceRecord_Pydantic]:
+    query = MaintenanceRecord.all()
     
     if equipment_id:
-        query = query.filter(MaintenanceRecord.equipment_id == equipment_id)
+        query = query.filter(equipment_id=equipment_id)
     if status:
-        query = query.filter(MaintenanceRecord.status == status)
+        query = query.filter(status=status)
     if start_date:
-        query = query.filter(MaintenanceRecord.date >= start_date)
+        query = query.filter(date__gte=start_date)
     if end_date:
-        query = query.filter(MaintenanceRecord.date <= end_date)
+        query = query.filter(date__lte=end_date)
     
-    return query.offset(skip).limit(limit).all()
+    maintenance_records = await query.offset(skip).limit(limit)
+    return [await MaintenanceRecord_Pydantic.from_tortoise_orm(m) for m in maintenance_records]
 
-def create_maintenance_record(
-    db: Session,
-    maintenance_record: MaintenanceRecordCreate
-) -> MaintenanceRecord:
-    db_maintenance = MaintenanceRecord(**maintenance_record.model_dump())
-    db.add(db_maintenance)
-    db.commit()
-    db.refresh(db_maintenance)
-    return db_maintenance
-
-def update_maintenance_record(
-    db: Session,
+async def update_maintenance_record(
     maintenance_id: int,
-    maintenance_record: MaintenanceRecordUpdate
-) -> Optional[MaintenanceRecord]:
-    db_maintenance = get_maintenance_record(db, maintenance_id)
-    if not db_maintenance:
+    maintenance: MaintenanceRecordIn_Pydantic
+) -> Optional[MaintenanceRecord_Pydantic]:
+    try:
+        await MaintenanceRecord.filter(id=maintenance_id).update(**maintenance.dict(exclude_unset=True))
+        return await get_maintenance_record(maintenance_id)
+    except DoesNotExist:
         return None
-    
-    update_data = maintenance_record.model_dump(exclude_unset=True)
-    for field, value in update_data.items():
-        setattr(db_maintenance, field, value)
-    
-    db.commit()
-    db.refresh(db_maintenance)
-    return db_maintenance
 
-def delete_maintenance_record(db: Session, maintenance_id: int) -> bool:
-    db_maintenance = get_maintenance_record(db, maintenance_id)
-    if not db_maintenance:
+async def delete_maintenance_record(maintenance_id: int) -> bool:
+    try:
+        await MaintenanceRecord.filter(id=maintenance_id).delete()
+        return True
+    except DoesNotExist:
         return False
-    
-    db.delete(db_maintenance)
-    db.commit()
-    return True
 
-def get_upcoming_maintenance(
-    db: Session,
-    days_ahead: int = 30
-) -> List[MaintenanceRecord]:
-    from datetime import timedelta
+async def get_equipment_maintenance_history(equipment_id: int) -> List[MaintenanceRecord_Pydantic]:
+    maintenance_records = await MaintenanceRecord.filter(equipment_id=equipment_id).order_by('-date')
+    return [await MaintenanceRecord_Pydantic.from_tortoise_orm(m) for m in maintenance_records]
+
+async def get_upcoming_maintenance() -> List[MaintenanceRecord_Pydantic]:
     today = date.today()
-    future_date = today + timedelta(days=days_ahead)
-    
-    return db.query(MaintenanceRecord).filter(
-        MaintenanceRecord.next_maintenance_date <= future_date,
-        MaintenanceRecord.next_maintenance_date >= today,
-        MaintenanceRecord.status != "completed"
-    ).all() 
+    maintenance_records = await MaintenanceRecord.filter(
+        next_maintenance_date__gte=today,
+        status='scheduled'
+    ).order_by('next_maintenance_date')
+    return [await MaintenanceRecord_Pydantic.from_tortoise_orm(m) for m in maintenance_records]
+
+async def get_maintenance_by_status(status: str) -> List[MaintenanceRecord_Pydantic]:
+    maintenance_records = await MaintenanceRecord.filter(status=status)
+    return [await MaintenanceRecord_Pydantic.from_tortoise_orm(m) for m in maintenance_records] 

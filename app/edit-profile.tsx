@@ -2,8 +2,8 @@ import React, { useState } from 'react';
 import { View, ScrollView, Text, TextInput, TouchableOpacity, Alert, Platform, Image } from 'react-native';
 import * as ImagePicker from 'expo-image-picker';
 import DateTimePicker from '@react-native-community/datetimepicker';
-import { useAuthStore } from '@/store/authStore';
-import type { User } from '@/store/authStore';
+import { useAuthStore } from '../store/authStore';
+import type { User } from '../store/authStore';
 import { Picker } from '@react-native-picker/picker';
 
 const GENDERS = ['Male', 'Female'];
@@ -70,8 +70,8 @@ export default function EditProfileScreen() {
 
   // Multi-select for specializations
   const toggleSpecialization = (spec: string) => {
-    setSpecializations((prev) =>
-      prev.includes(spec) ? prev.filter((s) => s !== spec) : [...prev, spec]
+    setSpecializations((prev: any) =>
+      prev.includes(spec) ? prev.filter((s: any) => s !== spec) : [...prev, spec]
     );
   };
 
@@ -282,7 +282,7 @@ export default function EditProfileScreen() {
         />
         <View style={styles.row}>
           <Text style={styles.label}>Two-Factor Authentication (2FA)</Text>
-          <TouchableOpacity onPress={() => setTwoFA((v) => !v)} style={[styles.chip, twoFA && styles.chipSelected]}>
+          <TouchableOpacity onPress={() => setTwoFA((v: any) => !v)} style={[styles.chip, twoFA && styles.chipSelected]}>
             <Text style={twoFA ? styles.chipTextSelected : styles.chipText}>{twoFA ? 'Enabled' : 'Disabled'}</Text>
           </TouchableOpacity>
         </View>

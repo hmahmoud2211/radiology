@@ -2,6 +2,7 @@ import React from 'react';
 import { Tabs } from 'expo-router';
 import { Home, ClipboardList, Users, Image, Calendar, FileText, Settings as SettingsIcon, Wrench } from 'lucide-react-native';
 import Colors from '@/constants/colors';
+import { Slot } from 'expo-router';
 
 export default function TabLayout() {
   return (
@@ -80,4 +81,8 @@ export default function TabLayout() {
       />
     </Tabs>
   );
+}
+
+export function Layout() {
+  return <Slot />;
 }

@@ -1,10 +1,10 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { useRouter } from 'expo-router';
-import Colors from '@/constants/colors';
-import { Plus, Search, Filter, FileText, Download, AlertCircle } from 'lucide-react-native';
-import EquipmentManagement from '@/components/management/EquipmentManagement';
-import FinancialManagement from '@/components/management/FinancialManagement';
+import Colors from '../../constants/colors';
+import { Search, Filter } from 'lucide-react-native';
+import EquipmentManagement from '../../components/management/EquipmentManagement';
+import FinancialManagement from '../../components/management/FinancialManagement';
 
 export default function ManagementScreen() {
   const router = useRouter();
@@ -23,43 +23,31 @@ export default function ManagementScreen() {
 
   return (
     <View style={styles.container}>
-      <View style={styles.header}>
-        <Text style={styles.title}>Managements</Text>
-        <View style={styles.headerActions}>
-          <TouchableOpacity style={styles.searchButton}>
-            <Search size={20} color={Colors.text} />
-          </TouchableOpacity>
-          <TouchableOpacity style={styles.filterButton}>
-            <Filter size={20} color={Colors.text} />
-          </TouchableOpacity>
-        </View>
-      </View>
-
-      <ScrollView 
-        horizontal 
-        showsHorizontalScrollIndicator={false}
-        contentContainerStyle={styles.tabBarContainer}
-      >
-        <View style={styles.tabBar}>
+      <View style={styles.topRow}>
+        <View style={styles.tabsRow}>
           <TouchableOpacity
             style={[styles.tab, activeTab === 'equipment' && styles.activeTab]}
             onPress={() => setActiveTab('equipment')}
           >
-            <Text style={[styles.tabText, activeTab === 'equipment' && styles.activeTabText]}>
-              Equipment
-            </Text>
+            <Text style={[styles.tabText, activeTab === 'equipment' && styles.activeTabText]}>Equipment</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[styles.tab, activeTab === 'financial' && styles.activeTab]}
             onPress={() => setActiveTab('financial')}
           >
-            <Text style={[styles.tabText, activeTab === 'financial' && styles.activeTabText]}>
-              Financial
-            </Text>
+            <Text style={[styles.tabText, activeTab === 'financial' && styles.activeTabText]}>Financial</Text>
           </TouchableOpacity>
         </View>
-      </ScrollView>
-
+        <View style={styles.headerActions}>
+          <TouchableOpacity style={styles.searchButton} onPress={() => Alert.alert('Search', 'Search functionality coming soon!')}>
+            <Search size={20} color={Colors.text} />
+          </TouchableOpacity>
+          <TouchableOpacity style={styles.filterButton} onPress={() => Alert.alert('Filter', 'Filter functionality coming soon!')}>
+            <Filter size={20} color={Colors.text} />
+          </TouchableOpacity>
+        </View>
+      </View>
+      <Text style={styles.title}>Managements</Text>
       {renderTabContent()}
     </View>
   );
@@ -69,24 +57,47 @@ const styles = StyleSheet.create({
   container: {
     flex: 1,
     backgroundColor: Colors.background,
+    paddingTop: 8,
   },
-  header: {
+  topRow: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 16,
-    backgroundColor: Colors.card,
-    borderBottomWidth: 1,
-    borderBottomColor: Colors.border,
+    justifyContent: 'space-between',
+    marginHorizontal: 8,
+    marginBottom: 4,
   },
-  title: {
-    fontSize: 24,
-    fontWeight: '700',
+  tabsRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: Colors.card,
+    borderRadius: 8,
+    padding: 2,
+    gap: 2,
+  },
+  tab: {
+    paddingVertical: 6,
+    paddingHorizontal: 18,
+    borderRadius: 6,
+    minWidth: 90,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  activeTab: {
+    backgroundColor: Colors.primary,
+  },
+  tabText: {
     color: Colors.text,
+    fontWeight: '500',
+    fontSize: 15,
+  },
+  activeTabText: {
+    color: 'white',
+    fontWeight: '600',
   },
   headerActions: {
     flexDirection: 'row',
     gap: 12,
+    alignItems: 'center',
   },
   searchButton: {
     padding: 8,
@@ -98,33 +109,11 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     backgroundColor: Colors.background,
   },
-  tabBarContainer: {
-    paddingHorizontal: 16,
-  },
-  tabBar: {
-    flexDirection: 'row',
-    backgroundColor: Colors.card,
-    padding: 8,
-    borderRadius: 8,
-    elevation: 2,
-    minWidth: '100%',
-  },
-  tab: {
-    flex: 1,
-    paddingVertical: 12,
-    alignItems: 'center',
-    borderRadius: 6,
-    minWidth: 120,
-  },
-  activeTab: {
-    backgroundColor: Colors.primary,
-  },
-  tabText: {
+  title: {
+    fontSize: 22,
+    fontWeight: '700',
     color: Colors.text,
-    fontWeight: '500',
-  },
-  activeTabText: {
-    color: 'white',
-    fontWeight: '600',
+    marginLeft: 16,
+    marginBottom: 4,
   },
 }); 

@@ -2,11 +2,11 @@ import React, { useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, Alert } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { CheckCircle2, AlertCircle } from 'lucide-react-native';
-import Colors from '@/constants/colors';
-import { useChecklistStore } from '@/store/checklistStore';
+import Colors from '../constants/colors';
+import { useChecklistStore } from '../store/checklistStore';
 import { useAuthStore } from '../store/authStore';
-import ChecklistItem from '@/components/checklist/ChecklistItem';
-import Button from '@/components/shared/Button';
+import ChecklistItem from '../components/checklist/ChecklistItem';
+import Button from '../components/shared/Button';
 
 export default function ChecklistScreen() {
   const router = useRouter();
@@ -75,7 +75,7 @@ export default function ChecklistScreen() {
   }
 
   const completedItems = currentChecklist.items.filter(
-    (item) => item.status === 'completed'
+    (item: any) => item.status === 'completed'
   ).length;
   const totalItems = currentChecklist.items.length;
   const progress = (completedItems / totalItems) * 100;
@@ -103,11 +103,11 @@ export default function ChecklistScreen() {
       </View>
 
       <ScrollView style={styles.content}>
-        {currentChecklist.items.map((item) => (
+        {currentChecklist.items.map((item: any) => (
           <ChecklistItem
             key={item.id}
             item={item}
-            onUpdate={(updates) =>
+            onUpdate={(updates: any) =>
               updateChecklistItem(currentChecklist.id, item.id, updates)
             }
           />

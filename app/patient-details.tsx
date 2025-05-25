@@ -2,13 +2,13 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Platform } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Calendar, Phone, Mail, MapPin, FileText, Plus, Edit, AlertTriangle, Activity, Clock, User, Syringe, Baby, Moon } from 'lucide-react-native';
-import Colors from '@/constants/colors';
-import { usePatientStore } from '@/store/patientStore';
-import { useStudiesStore } from '@/store/studiesStore';
-import StudyCard from '@/components/shared/StudyCard';
-import AppointmentCard from '@/components/shared/AppointmentCard';
-import Button from '@/components/shared/Button';
-import { Study, Appointment } from '@/types';
+import Colors from '../constants/colors';
+import { usePatientStore } from '../store/patientStore';
+import { useStudiesStore } from '../store/studiesStore';
+import StudyCard from '../components/shared/StudyCard';
+import AppointmentCard from '../components/shared/AppointmentCard';
+import Button from '../components/shared/Button';
+import { Study, Appointment } from '../types';
 
 export default function PatientDetailsScreen() {
   const router = useRouter();
@@ -58,7 +58,7 @@ export default function PatientDetailsScreen() {
     new Date(study.studyDate) < new Date() && study.status !== 'In Progress'
   );
 
-  const hasContrastAllergy = selectedPatient.allergies?.some(allergy => 
+  const hasContrastAllergy = selectedPatient.allergies?.some((allergy: string) => 
     allergy.toLowerCase().includes('contrast') || 
     allergy.toLowerCase().includes('iodine')
   );

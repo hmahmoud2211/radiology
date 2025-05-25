@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity } from 'react-native';
-import Colors from '@/constants/colors';
-import { radiologyTests } from '@/mocks/tests';
-import Button from '@/components/shared/Button';
+import Colors from '../../constants/colors';
+import { radiologyTests as tests } from '../../mocks/tests';
+import Button from '../../components/shared/Button';
 
 const INSURANCES = [
   { name: 'None', discount: 0 },
@@ -32,7 +32,7 @@ export default function TestsScreen() {
     <View style={styles.container}>
       <Text style={styles.title}>Radiology Tests</Text>
       <ScrollView contentContainerStyle={styles.gridContainer}>
-        {radiologyTests.map((test) => (
+        {tests.map((test: any) => (
           <TouchableOpacity
             key={test.id}
             style={[styles.testBox, { backgroundColor: MODALITY_COLORS[test.modality] || MODALITY_COLORS['Other'] }]}

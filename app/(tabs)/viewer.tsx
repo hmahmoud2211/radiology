@@ -1,13 +1,13 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, Image as RNImage } from 'react-native';
 import { useRouter } from 'expo-router';
-import Colors from '@/constants/colors';
-import { useStudiesStore } from '@/store/studiesStore';
-import { useViewerStore } from '@/store/viewerStore';
-import ImageViewer from '@/components/viewer/ImageViewer';
-import StudyCard from '@/components/shared/StudyCard';
-import SearchBar from '@/components/shared/SearchBar';
-import { Study } from '@/types';
+import Colors from '../../constants/colors';
+import { useStudiesStore } from '../../store/studiesStore';
+import { useViewerStore } from '../../store/viewerStore';
+import ImageViewer from '../../components/viewer/ImageViewer';
+import StudyCard from '../../components/shared/StudyCard';
+import SearchBar from '../../components/shared/SearchBar';
+import { Study } from '../../types';
 import Slider from '@react-native-community/slider';
 
 export default function ViewerScreen() {
@@ -67,7 +67,7 @@ export default function ViewerScreen() {
     if (!searchQuery) {
       // Only show completed studies with images
       const completedStudies = studies.filter(
-        study => study.status === 'Completed' && study.images && study.images.length > 0
+        (study: Study) => study.status === 'Completed' && study.images && study.images.length > 0
       );
       setFilteredStudies(completedStudies);
       return;
@@ -75,7 +75,7 @@ export default function ViewerScreen() {
     
     const query = searchQuery.toLowerCase();
     const filtered = studies.filter(
-      study =>
+      (study: Study) =>
         study.patientName.toLowerCase().includes(query) ||
         study.modality.toLowerCase().includes(query) ||
         study.bodyPart.toLowerCase().includes(query) ||
@@ -214,16 +214,16 @@ export default function ViewerScreen() {
           {!overlayMode ? (
             <View style={styles.sideBySideImages}>
               <ImageViewer images={[firstImage]} studyInfo={{
-                patientName: firstStudy.patientName,
-                modality: firstStudy.modality,
-                bodyPart: firstStudy.bodyPart,
-                studyDate: firstStudy.studyDate,
+                patientName: firstStudy.patientName ?? '',
+                modality: firstStudy.modality ?? '',
+                bodyPart: firstStudy.bodyPart ?? '',
+                studyDate: firstStudy.studyDate ?? '',
               }} currentImageIndex={firstImageIndex} setCurrentImageIndex={setFirstImageIndex} />
               <ImageViewer images={[secondImage]} studyInfo={{
-                patientName: secondStudy.patientName,
-                modality: secondStudy.modality,
-                bodyPart: secondStudy.bodyPart,
-                studyDate: secondStudy.studyDate,
+                patientName: secondStudy.patientName ?? '',
+                modality: secondStudy.modality ?? '',
+                bodyPart: secondStudy.bodyPart ?? '',
+                studyDate: secondStudy.studyDate ?? '',
               }} currentImageIndex={secondImageIndex} setCurrentImageIndex={setSecondImageIndex} />
             </View>
           ) : (
@@ -248,17 +248,17 @@ export default function ViewerScreen() {
           <View style={styles.viewerContainer}>
             <TouchableOpacity 
               style={styles.backButton}
-              onPress={() => selectStudy(null)}
+              onPress={() => selectStudy('')}
             >
               <Text style={styles.backButtonText}>Back to Studies</Text>
             </TouchableOpacity>
             <ImageViewer 
               images={selectedStudy.images}
               studyInfo={{
-                patientName: selectedStudy.patientName,
-                modality: selectedStudy.modality,
-                bodyPart: selectedStudy.bodyPart,
-                studyDate: selectedStudy.studyDate,
+                patientName: selectedStudy.patientName ?? '',
+                modality: selectedStudy.modality ?? '',
+                bodyPart: selectedStudy.bodyPart ?? '',
+                studyDate: selectedStudy.studyDate ?? '',
               }}
             />
           </View>
@@ -278,7 +278,7 @@ export default function ViewerScreen() {
               contentContainerStyle={styles.listContent}
             >
               {filteredStudies.length > 0 ? (
-                filteredStudies.map((study) => (
+                filteredStudies.map((study: Study) => (
                   <StudyCard key={study.id} study={study} onPress={handleStudyPress} />
                 ))
               ) : (

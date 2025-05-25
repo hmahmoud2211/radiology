@@ -2,11 +2,11 @@ import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, RefreshControl, TouchableOpacity } from 'react-native';
 import { useRouter } from 'expo-router';
 import { Plus } from 'lucide-react-native';
-import Colors from '@/constants/colors';
-import { usePatientStore } from '@/store/patientStore';
-import PatientCard from '@/components/shared/PatientCard';
-import SearchBar from '@/components/shared/SearchBar';
-import { Patient } from '@/types';
+import Colors from '../../constants/colors';
+import { usePatientStore } from '../../store/patientStore';
+import PatientCard from '../../components/shared/PatientCard';
+import SearchBar from '../../components/shared/SearchBar';
+import { Patient } from '../../types';
 
 export default function PatientsScreen() {
   const router = useRouter();
@@ -42,7 +42,7 @@ export default function PatientsScreen() {
     
     const query = searchQuery.toLowerCase();
     const filtered = patients.filter(
-      patient =>
+      (patient: Patient) =>
         patient.name.toLowerCase().includes(query) ||
         patient.patientId.toLowerCase().includes(query) ||
         (patient.contactNumber && patient.contactNumber.includes(query)) ||
@@ -82,7 +82,7 @@ export default function PatientsScreen() {
         }
       >
         {filteredPatients.length > 0 ? (
-          filteredPatients.map((patient) => (
+          filteredPatients.map((patient: Patient) => (
             <PatientCard key={patient.id} patient={patient} onPress={handlePatientPress} />
           ))
         ) : (

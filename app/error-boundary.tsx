@@ -1,6 +1,10 @@
 import React from 'react';
 import { View, Text, StyleSheet, Platform } from 'react-native';
 
+// Add global declarations at the top
+declare const window: any;
+declare const document: any;
+
 interface Props {
   children: React.ReactNode;
   onError?: (error: Error, errorInfo: React.ErrorInfo) => void;
@@ -20,11 +24,11 @@ const webTargetOrigins = [
 ];    
 
 function sendErrorToIframeParent(error: any, errorInfo?: any) {
-  if (Platform.OS === 'web' && typeof window !== 'undefined') {
+  if (Platform.OS === 'web' && typeof window !== 'undefined' && typeof document !== 'undefined') {
     console.debug('Sending error to parent:', {
       error,
       errorInfo,
-      referrer: document.referrer
+      referrer: (document as any).referrer
     });
 
     const errorMessage = {
@@ -39,18 +43,20 @@ function sendErrorToIframeParent(error: any, errorInfo?: any) {
     };
 
     try {
-      window.parent.postMessage(
+      (window as any).parent.postMessage(
         errorMessage,
-        webTargetOrigins.includes(document.referrer) ? document.referrer : '*'
+        (document as any).referrer
       );
     } catch (postMessageError) {
-      console.error('Failed to send error to parent:', postMessageError);
+      if (typeof console !== 'undefined') {
+        console.error('Failed to send error to parent:', postMessageError);
+      }
     }
   }
 }
 
-if (Platform.OS === 'web' && typeof window !== 'undefined') {
-  window.addEventListener('error', (event) => {
+if (typeof window !== 'undefined' && typeof document !== 'undefined' && Platform.OS === 'web') {
+  (window as any).addEventListener('error', (event: any) => {
     event.preventDefault();
     const errorDetails = event.error ?? {
       message: event.message ?? 'Unknown error',
@@ -61,13 +67,13 @@ if (Platform.OS === 'web' && typeof window !== 'undefined') {
     sendErrorToIframeParent(errorDetails);
   }, true);
 
-  window.addEventListener('unhandledrejection', (event) => {
+  (window as any).addEventListener('unhandledrejection', (event: any) => {
     event.preventDefault();
     sendErrorToIframeParent(event.reason);
   }, true);
 
   const originalConsoleError = console.error;
-  console.error = (...args) => {
+  console.error = (...args: any[]) => {
     sendErrorToIframeParent(args.join(' '));
     originalConsoleError.apply(console, args);
   };

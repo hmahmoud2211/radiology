@@ -1,40 +1,40 @@
-from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy.orm import Session
-from typing import List, Optional
-from database.database import get_db
-from schemas.appointment import Appointment, AppointmentCreate, AppointmentUpdate
-from crud import appointment as appointment_crud
+from fastapi import APIRouter, HTTPException
+from typing import List
+from backend.models.tortoise_models import Appointment, Appointment_Pydantic, AppointmentIn_Pydantic
 
 router = APIRouter(
     prefix="/appointments",
-    tags=["appointments"]
+    tags=["appointments"],
+    responses={404: {"description": "Not found"}},
 )
 
-@router.post("/", response_model=Appointment)
-def create_appointment(appointment: AppointmentCreate, db: Session = Depends(get_db)):
-    return appointment_crud.create_appointment(db=db, appointment=appointment)
+@router.post("/", response_model=Appointment_Pydantic)
+async def create_appointment(appointment: AppointmentIn_Pydantic):
+    appointment_obj = await Appointment.create(**appointment.dict(exclude_unset=True))
+    return await Appointment_Pydantic.from_tortoise_orm(appointment_obj)
 
-@router.get("/", response_model=List[Appointment])
-def read_appointments(skip: int = 0, limit: int = 100, patient_id: Optional[int] = None, db: Session = Depends(get_db)):
-    return appointment_crud.get_appointments(db, skip=skip, limit=limit, patient_id=patient_id)
-
-@router.get("/{appointment_id}", response_model=Appointment)
-def read_appointment(appointment_id: int, db: Session = Depends(get_db)):
-    db_appointment = appointment_crud.get_appointment(db, appointment_id=appointment_id)
-    if db_appointment is None:
+@router.get("/{appointment_id}", response_model=Appointment_Pydantic)
+async def get_appointment(appointment_id: int):
+    appointment = await Appointment.get_or_none(id=appointment_id)
+    if not appointment:
         raise HTTPException(status_code=404, detail="Appointment not found")
-    return db_appointment
+    return await Appointment_Pydantic.from_tortoise_orm(appointment)
 
-@router.put("/{appointment_id}", response_model=Appointment)
-def update_appointment(appointment_id: int, appointment: AppointmentUpdate, db: Session = Depends(get_db)):
-    db_appointment = appointment_crud.update_appointment(db, appointment_id=appointment_id, appointment_update=appointment)
-    if db_appointment is None:
+@router.get("/", response_model=List[Appointment_Pydantic])
+async def get_appointments():
+    return await Appointment_Pydantic.from_queryset(Appointment.all())
+
+@router.put("/{appointment_id}", response_model=Appointment_Pydantic)
+async def update_appointment(appointment_id: int, appointment: AppointmentIn_Pydantic):
+    appointment_obj = await Appointment.get_or_none(id=appointment_id)
+    if not appointment_obj:
         raise HTTPException(status_code=404, detail="Appointment not found")
-    return db_appointment
+    await appointment_obj.update_from_dict(appointment.dict(exclude_unset=True)).save()
+    return await Appointment_Pydantic.from_tortoise_orm(appointment_obj)
 
 @router.delete("/{appointment_id}")
-def delete_appointment(appointment_id: int, db: Session = Depends(get_db)):
-    success = appointment_crud.delete_appointment(db, appointment_id=appointment_id)
-    if not success:
+async def delete_appointment(appointment_id: int):
+    deleted_count = await Appointment.filter(id=appointment_id).delete()
+    if not deleted_count:
         raise HTTPException(status_code=404, detail="Appointment not found")
     return {"message": "Appointment deleted successfully"} 
