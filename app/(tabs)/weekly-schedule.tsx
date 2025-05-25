@@ -2,11 +2,11 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Modal, Dimensions, Alert } from 'react-native';
 import { useRouter, useFocusEffect } from 'expo-router';
 import { ChevronLeft, ChevronRight, Filter, X } from 'lucide-react-native';
-import Colors from '@/constants/colors';
-import { usePatientStore } from '@/store/patientStore';
-import Button from '@/components/shared/Button';
-import { Appointment } from '@/types';
-import { radiologyTests } from '@/mocks/tests';
+import Colors from '../../constants/colors';
+import { usePatientStore } from '../../store/patientStore';
+import Button from '../../components/shared/Button';
+import { Appointment } from '../../types';
+import { radiologyTests as tests } from '../../mocks/tests';
 
 // Constants for time slots (8 AM to 8 PM, 30-min intervals)
 export const TIME_SLOTS = Array.from({ length: 25 }, (_, i) => {
@@ -37,7 +37,7 @@ function getScanColor(type: string): string {
 }
 
 function getModalityByTestId(testId: string): string {
-  const test = radiologyTests.find(t => t.id === testId);
+  const test = tests.find((t: any) => t.id === testId);
   return test ? test.modality : 'Other';
 }
 
@@ -146,8 +146,8 @@ export default function WeeklyScheduleScreen() {
   const formatDay = (date: Date): string =>
     date.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' });
 
-  const filteredAppointments = appointments.filter(a => {
-    if (selectedScanType !== 'All' && !a.testName.includes(selectedScanType)) return false;
+  const filteredAppointments = appointments.filter((a: Appointment) => {
+    if (selectedScanType !== 'All' && !(a.testName ?? '').includes(selectedScanType)) return false;
     if (selectedMachine !== 'All' && a.notes !== selectedMachine) return false;
     if (selectedRoom !== 'All' && a.notes !== selectedRoom) return false;
     if (selectedTechnician !== 'All' && a.notes !== selectedTechnician) return false;
@@ -155,7 +155,7 @@ export default function WeeklyScheduleScreen() {
   });
 
   const grid: (Appointment | null)[][] = Array(7).fill(null).map(() => Array(TIME_SLOTS.length).fill(null));
-  filteredAppointments.forEach(app => {
+  filteredAppointments.forEach((app: Appointment) => {
     const dayIdx = currentWeek.findIndex(d =>
       new Date(app.date).getDate() === d.getDate() &&
       new Date(app.date).getMonth() === d.getMonth() &&
@@ -239,7 +239,7 @@ export default function WeeklyScheduleScreen() {
                       const slotCount = getSlotCount(app);
                       const appHeight = slotCount * slotHeight - 8;
                       const isHighlighted =
-                        (selectedScanType === 'All' || app.testName.includes(selectedScanType)) &&
+                        (selectedScanType === 'All' || (app.testName ?? '').includes(selectedScanType)) &&
                         (selectedMachine === 'All' || app.notes === selectedMachine) &&
                         (selectedRoom === 'All' || app.notes === selectedRoom) &&
                         (selectedTechnician === 'All' || app.notes === selectedTechnician);
@@ -249,7 +249,7 @@ export default function WeeklyScheduleScreen() {
                           style={[
                             styles.appointmentBlock,
                             {
-                              backgroundColor: getScanColor(getModalityByTestId(app.testId)),
+                              backgroundColor: getScanColor(getModalityByTestId(app.testId ?? '')),
                               height: appHeight,
                               flex: 1,
                               marginRight: i < apps.length - 1 ? 6 : 0,
@@ -262,8 +262,8 @@ export default function WeeklyScheduleScreen() {
                           }}
                           activeOpacity={0.85}
                         >
-                          <Text style={styles.appointmentName}>{app.patientName}</Text>
-                          <Text style={styles.appointmentType}>{app.testName}</Text>
+                          <Text style={styles.appointmentName}>{app.patientName ?? ''}</Text>
+                          <Text style={styles.appointmentType}>{(app.testName ?? '')}</Text>
                           <Text style={styles.appointmentTime}>{app.time}</Text>
                         </TouchableOpacity>
                       );
@@ -294,7 +294,7 @@ export default function WeeklyScheduleScreen() {
             </View>
             <ScrollView style={{ padding: 16 }}>
               {selectedDayIdx !== null &&
-                filteredAppointments.filter(app => {
+                filteredAppointments.filter((app: Appointment) => {
                   const d = currentWeek[selectedDayIdx];
                   const appDate = new Date(app.date);
                   return (
@@ -302,16 +302,16 @@ export default function WeeklyScheduleScreen() {
                     appDate.getMonth() === d.getMonth() &&
                     appDate.getFullYear() === d.getFullYear()
                   );
-                }).map(app => (
-                  <View key={app.id} style={{ backgroundColor: getScanColor(app.testName), borderRadius: 10, padding: 14, marginBottom: 10 }}>
-                    <Text style={{ color: '#fff', fontWeight: '700', fontSize: 16 }}>{app.patientName}</Text>
-                    <Text style={{ color: '#fff', fontSize: 14 }}>{app.testName}</Text>
+                }).map((app: Appointment) => (
+                  <View key={app.id} style={{ backgroundColor: getScanColor(app.testName ?? ''), borderRadius: 10, padding: 14, marginBottom: 10 }}>
+                    <Text style={{ color: '#fff', fontWeight: '700', fontSize: 16 }}>{app.patientName ?? ''}</Text>
+                    <Text style={{ color: '#fff', fontSize: 14 }}>{(app.testName ?? '')}</Text>
                     <Text style={{ color: '#fff', fontSize: 13 }}>{app.time}</Text>
-                    <Text style={{ color: '#fff', fontSize: 13, fontStyle: 'italic' }}>Room: {app.notes || 'N/A'}</Text>
+                    <Text style={{ color: '#fff', fontSize: 13, fontStyle: 'italic' }}>Room: {(app.notes ?? 'N/A')}</Text>
                   </View>
                 ))
               }
-              {selectedDayIdx !== null && filteredAppointments.filter(app => {
+              {selectedDayIdx !== null && filteredAppointments.filter((app: Appointment) => {
                 const d = currentWeek[selectedDayIdx];
                 const appDate = new Date(app.date);
                 return (
@@ -344,13 +344,13 @@ export default function WeeklyScheduleScreen() {
             {selectedAppointment && (
               <ScrollView style={styles.drawerBody}>
                 <Text style={styles.drawerLabel}>Patient Name</Text>
-                <Text style={styles.drawerValue}>{selectedAppointment.patientName}</Text>
+                <Text style={styles.drawerValue}>{selectedAppointment.patientName ?? ''}</Text>
                 <Text style={styles.drawerLabel}>Scan Type</Text>
-                <Text style={styles.drawerValue}>{selectedAppointment.testName}</Text>
+                <Text style={styles.drawerValue}>{(selectedAppointment.testName ?? '')}</Text>
                 <Text style={styles.drawerLabel}>Time</Text>
                 <Text style={styles.drawerValue}>{selectedAppointment.time}</Text>
                 <Text style={styles.drawerLabel}>Room</Text>
-                <Text style={styles.drawerValue}>{selectedAppointment.notes || 'N/A'}</Text>
+                <Text style={styles.drawerValue}>{(selectedAppointment.notes ?? 'N/A')}</Text>
                 <View style={{ marginTop: 16 }}>
                   <Button title="Reschedule" onPress={() => {
                     setShowAppointmentDetails(false);

@@ -1,0 +1,14 @@
+Metadata-Version: 2.4
+Name: radiology-backend
+Version: 0.1
+Requires-Dist: fastapi
+Requires-Dist: uvicorn
+Requires-Dist: python-dotenv
+Requires-Dist: passlib[bcrypt]
+Requires-Dist: python-jose[cryptography]
+Requires-Dist: python-multipart
+Requires-Dist: tortoise-orm
+Requires-Dist: aiosqlite
+Requires-Dist: pydantic
+Requires-Dist: email-validator
+Dynamic: requires-dist

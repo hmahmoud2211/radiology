@@ -71,41 +71,64 @@ export const useAuthStore = create<AuthState>()(
       login: async (email: string, password: string, rememberMe: boolean) => {
         set({ isLoading: true, error: null });
         try {
-          // TODO: Implement actual API call
-          const mockUser: User = {
-            id: '1',
-            email,
-            username: email.split('@')[0],
-            fullName: 'John Doe',
-            role: 'radiologist',
-            preferences: {
-              theme: 'system',
-              language: 'en',
-              defaultStartupScreen: 'home',
-              dataDisplayPreferences: {
-                showNotifications: true,
-                showAlerts: true,
-                showHistory: true,
-              },
-              notificationSettings: {
-                pushEnabled: true,
-                emailEnabled: true,
-                alertTypes: ['critical', 'warning', 'info'],
-              },
-              biometricEnabled: false,
-              sessionTimeout: 30,
+          const response = await fetch('http://localhost:8000/auth/login', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/x-www-form-urlencoded',
             },
-          };
-
-          set({
-            user: mockUser,
-            currentUser: mockUser,
-            isAuthenticated: true,
-            isLoading: false,
+            body: new URLSearchParams({
+              username: email,
+              password: password,
+            }),
           });
-        } catch (error) {
+
+          if (!response.ok) {
+            const errorData = await response.json();
+            throw new Error(errorData.detail || 'Login failed');
+          }
+
+          const data = await response.json();
+          
+          if (data.access_token) {
+            const user: User = {
+              id: data.user.id.toString(),
+              email: data.user.email,
+              username: data.user.name,
+              fullName: data.user.name,
+              role: data.user.role,
+              preferences: {
+                theme: 'system',
+                language: 'en',
+                defaultStartupScreen: 'home',
+                dataDisplayPreferences: {
+                  showNotifications: true,
+                  showAlerts: true,
+                  showHistory: true,
+                },
+                notificationSettings: {
+                  pushEnabled: true,
+                  emailEnabled: true,
+                  alertTypes: ['critical', 'warning', 'info'],
+                },
+                biometricEnabled: false,
+                sessionTimeout: 30,
+              },
+            };
+
+            set({
+              user,
+              currentUser: user,
+              isAuthenticated: true,
+              isLoading: false,
+            });
+
+            if (rememberMe) {
+              await AsyncStorage.setItem('auth_token', data.access_token);
+            }
+          }
+        } catch (error: any) {
           set({
-            error: 'Invalid credentials',
+            error: error.message || 'Invalid credentials',
             isLoading: false,
           });
         }

@@ -14,10 +14,10 @@ interface StudiesState {
   
   // Actions
   fetchStudies: () => Promise<void>;
-  addStudy: (study: Omit<Study, 'id'>) => Promise<void>;
-  updateStudy: (id: string, updates: Partial<Study>) => Promise<void>;
+  addStudy: (study: Omit<Study, 'id'>) => Promise<Study>;
+  updateStudy: (id: string, study: Partial<Study>) => Promise<Study>;
   deleteStudy: (id: string) => Promise<void>;
-  selectStudy: (id: string | null) => void;
+  selectStudy: (id: string) => void;
   getPatientStudies: (patientId: string) => Study[];
   
   // Annotations and measurements
@@ -50,60 +50,42 @@ export const useStudiesStore = create<StudiesState>()(
         }
       },
 
-      addStudy: async (study) => {
-        set({ isLoading: true, error: null });
-        try {
-          const newStudy: Study = {
-            ...study,
-            id: Date.now().toString(),
-          };
-          set((state) => ({
-            studies: [...state.studies, newStudy],
-            isLoading: false,
-          }));
-        } catch (error) {
-          set({ error: 'Failed to add study', isLoading: false });
-        }
+      addStudy: async (study: Omit<Study, 'id'>) => {
+        const newStudy: Study = {
+          ...study,
+          id: Math.random().toString(36).substr(2, 9),
+        };
+        set((state) => ({
+          studies: [...state.studies, newStudy],
+        }));
+        return newStudy;
       },
 
-      updateStudy: async (id, updates) => {
-        set({ isLoading: true, error: null });
-        try {
-          set((state) => ({
-            studies: state.studies.map((study) =>
-              study.id === id ? { ...study, ...updates } : study
-            ),
-            isLoading: false,
-          }));
-        } catch (error) {
-          set({ error: 'Failed to update study', isLoading: false });
-        }
+      updateStudy: async (id: string, study: Partial<Study>) => {
+        const updatedStudy: Study = {
+          ...get().studies.find((s) => s.id === id)!,
+          ...study,
+          id,
+        };
+        set((state) => ({
+          studies: state.studies.map((s) => (s.id === id ? updatedStudy : s)),
+        }));
+        return updatedStudy;
       },
 
-      deleteStudy: async (id) => {
-        set({ isLoading: true, error: null });
-        try {
-          set((state) => ({
-            studies: state.studies.filter((study) => study.id !== id),
-            isLoading: false,
-          }));
-        } catch (error) {
-          set({ error: 'Failed to delete study', isLoading: false });
-        }
+      deleteStudy: async (id: string) => {
+        set((state) => ({
+          studies: state.studies.filter((s) => s.id !== id),
+        }));
       },
 
-      selectStudy: (id) => {
-        if (id === null) {
-          set({ selectedStudy: null });
-          return;
-        }
-        
-        const study = get().studies.find((s) => s.id === id) || null;
-        set({ selectedStudy: study });
+      selectStudy: (id: string) => {
+        const study = get().studies.find((s) => s.id === id);
+        set({ selectedStudy: study || null });
       },
 
-      getPatientStudies: (patientId) => {
-        return get().studies.filter((study) => study.patientId === patientId);
+      getPatientStudies: (patientId: string) => {
+        return get().studies.filter((s) => s.patientId === patientId);
       },
 
       addAnnotation: (annotation) => {

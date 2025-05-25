@@ -1,67 +1,40 @@
-from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.orm import Session
-from typing import List, Optional
-from database.database import get_db
-from schemas.referring_physician import ReferringPhysician, ReferringPhysicianCreate, ReferringPhysicianUpdate
-from crud import referring_physician as physician_crud
+from fastapi import APIRouter, HTTPException
+from typing import List
+from backend.models.tortoise_models import ReferringPhysician, ReferringPhysician_Pydantic, ReferringPhysicianIn_Pydantic
 
 router = APIRouter(
     prefix="/referring-physicians",
-    tags=["referring-physicians"]
+    tags=["referring-physicians"],
+    responses={404: {"description": "Not found"}},
 )
 
-@router.post("/", response_model=ReferringPhysician)
-def create_referring_physician(physician: ReferringPhysicianCreate, db: Session = Depends(get_db)):
-    db_physician = physician_crud.get_referring_physician_by_license(db, physician.license_number)
-    if db_physician:
-        raise HTTPException(status_code=400, detail="License number already registered")
-    return physician_crud.create_referring_physician(db=db, physician=physician)
+@router.post("/", response_model=ReferringPhysician_Pydantic)
+async def create_referring_physician(physician: ReferringPhysicianIn_Pydantic):
+    physician_obj = await ReferringPhysician.create(**physician.dict(exclude_unset=True))
+    return await ReferringPhysician_Pydantic.from_tortoise_orm(physician_obj)
 
-@router.get("/", response_model=List[ReferringPhysician])
-def read_referring_physicians(
-    skip: int = 0,
-    limit: int = 100,
-    search: Optional[str] = None,
-    specialization: Optional[str] = None,
-    hospital: Optional[str] = None,
-    is_active: Optional[bool] = None,
-    db: Session = Depends(get_db)
-):
-    return physician_crud.get_referring_physicians(
-        db, 
-        skip=skip, 
-        limit=limit, 
-        search=search,
-        specialization=specialization,
-        hospital=hospital,
-        is_active=is_active
-    )
-
-@router.get("/{physician_id}", response_model=ReferringPhysician)
-def read_referring_physician(physician_id: int, db: Session = Depends(get_db)):
-    db_physician = physician_crud.get_referring_physician(db, physician_id=physician_id)
-    if db_physician is None:
+@router.get("/{physician_id}", response_model=ReferringPhysician_Pydantic)
+async def get_referring_physician(physician_id: int):
+    physician = await ReferringPhysician.get_or_none(id=physician_id)
+    if not physician:
         raise HTTPException(status_code=404, detail="Referring physician not found")
-    return db_physician
+    return await ReferringPhysician_Pydantic.from_tortoise_orm(physician)
 
-@router.put("/{physician_id}", response_model=ReferringPhysician)
-def update_referring_physician(
-    physician_id: int,
-    physician: ReferringPhysicianUpdate,
-    db: Session = Depends(get_db)
-):
-    db_physician = physician_crud.update_referring_physician(
-        db, 
-        physician_id=physician_id, 
-        physician_update=physician
-    )
-    if db_physician is None:
+@router.get("/", response_model=List[ReferringPhysician_Pydantic])
+async def get_referring_physicians():
+    return await ReferringPhysician_Pydantic.from_queryset(ReferringPhysician.all())
+
+@router.put("/{physician_id}", response_model=ReferringPhysician_Pydantic)
+async def update_referring_physician(physician_id: int, physician: ReferringPhysicianIn_Pydantic):
+    physician_obj = await ReferringPhysician.get_or_none(id=physician_id)
+    if not physician_obj:
         raise HTTPException(status_code=404, detail="Referring physician not found")
-    return db_physician
+    await physician_obj.update_from_dict(physician.dict(exclude_unset=True)).save()
+    return await ReferringPhysician_Pydantic.from_tortoise_orm(physician_obj)
 
 @router.delete("/{physician_id}")
-def delete_referring_physician(physician_id: int, db: Session = Depends(get_db)):
-    success = physician_crud.delete_referring_physician(db, physician_id=physician_id)
-    if not success:
+async def delete_referring_physician(physician_id: int):
+    deleted_count = await ReferringPhysician.filter(id=physician_id).delete()
+    if not deleted_count:
         raise HTTPException(status_code=404, detail="Referring physician not found")
     return {"message": "Referring physician deleted successfully"} 

@@ -1,98 +1,73 @@
-from sqlalchemy.orm import Session
-from models.study import Study, StudyStatus
-from schemas.study import StudyCreate, StudyUpdate
 from typing import List, Optional
-from datetime import datetime, date
+from backend.models.tortoise_models import Study, Study_Pydantic, StudyIn_Pydantic
+from tortoise.exceptions import DoesNotExist
+from datetime import date, datetime
 
-def get_study(db: Session, study_id: int) -> Optional[Study]:
-    return db.query(Study).filter(Study.id == study_id).first()
+async def create_study(study: StudyIn_Pydantic) -> Study_Pydantic:
+    study_obj = await Study.create(**study.dict(exclude_unset=True))
+    return await Study_Pydantic.from_tortoise_orm(study_obj)
 
-def get_studies(
-    db: Session,
+async def get_study(study_id: int) -> Optional[Study_Pydantic]:
+    try:
+        study = await Study.get(id=study_id)
+        return await Study_Pydantic.from_tortoise_orm(study)
+    except DoesNotExist:
+        return None
+
+async def get_all_studies(
     skip: int = 0,
     limit: int = 100,
     patient_id: Optional[int] = None,
     physician_id: Optional[int] = None,
-    status: Optional[StudyStatus] = None,
-    study_type: Optional[str] = None,
+    status: Optional[str] = None,
     start_date: Optional[date] = None,
-    end_date: Optional[date] = None,
-    priority: Optional[str] = None
-) -> List[Study]:
-    query = db.query(Study)
+    end_date: Optional[date] = None
+) -> List[Study_Pydantic]:
+    query = Study.all()
     
     if patient_id:
-        query = query.filter(Study.patient_id == patient_id)
+        query = query.filter(patient_id=patient_id)
     if physician_id:
-        query = query.filter(Study.referring_physician_id == physician_id)
+        query = query.filter(referring_physician_id=physician_id)
     if status:
-        query = query.filter(Study.status == status)
-    if study_type:
-        query = query.filter(Study.study_type == study_type)
+        query = query.filter(status=status)
     if start_date:
-        query = query.filter(Study.study_date >= start_date)
+        query = query.filter(study_date__gte=start_date)
     if end_date:
-        query = query.filter(Study.study_date <= end_date)
-    if priority:
-        query = query.filter(Study.priority == priority)
+        query = query.filter(study_date__lte=end_date)
     
-    return query.order_by(Study.study_date.desc()).offset(skip).limit(limit).all()
+    studies = await query.offset(skip).limit(limit)
+    return [await Study_Pydantic.from_tortoise_orm(s) for s in studies]
 
-def create_study(db: Session, study: StudyCreate) -> Study:
-    db_study = Study(**study.model_dump())
-    db.add(db_study)
-    db.commit()
-    db.refresh(db_study)
-    return db_study
-
-def update_study(
-    db: Session,
-    study_id: int,
-    study_update: StudyUpdate
-) -> Optional[Study]:
-    db_study = get_study(db, study_id)
-    if not db_study:
+async def update_study(study_id: int, study: StudyIn_Pydantic) -> Optional[Study_Pydantic]:
+    try:
+        await Study.filter(id=study_id).update(**study.dict(exclude_unset=True))
+        return await get_study(study_id)
+    except DoesNotExist:
         return None
-    
-    update_data = study_update.model_dump(exclude_unset=True)
-    for field, value in update_data.items():
-        setattr(db_study, field, value)
-    
-    db.commit()
-    db.refresh(db_study)
-    return db_study
 
-def delete_study(db: Session, study_id: int) -> bool:
-    db_study = get_study(db, study_id)
-    if not db_study:
+async def delete_study(study_id: int) -> bool:
+    try:
+        await Study.filter(id=study_id).delete()
+        return True
+    except DoesNotExist:
         return False
-    
-    db.delete(db_study)
-    db.commit()
-    return True
 
-def get_patient_studies(
-    db: Session,
-    patient_id: int,
-    skip: int = 0,
-    limit: int = 100
-) -> List[Study]:
-    return db.query(Study)\
-        .filter(Study.patient_id == patient_id)\
-        .order_by(Study.study_date.desc())\
-        .offset(skip)\
-        .limit(limit)\
-        .all()
+async def get_patient_studies(patient_id: int) -> List[Study_Pydantic]:
+    studies = await Study.filter(patient_id=patient_id).order_by('-study_date')
+    return [await Study_Pydantic.from_tortoise_orm(s) for s in studies]
 
-def get_physician_studies(
-    db: Session,
-    physician_id: int,
-    skip: int = 0,
-    limit: int = 100
-) -> List[Study]:
-    return db.query(Study)\
-        .filter(Study.referring_physician_id == physician_id)\
-        .order_by(Study.study_date.desc())\
-        .offset(skip)\
-        .limit(limit)\
-        .all() 
+async def get_physician_studies(physician_id: int) -> List[Study_Pydantic]:
+    studies = await Study.filter(referring_physician_id=physician_id).order_by('-study_date')
+    return [await Study_Pydantic.from_tortoise_orm(s) for s in studies]
+
+async def get_studies_by_date_range(start_date: date, end_date: date) -> List[Study_Pydantic]:
+    studies = await Study.filter(
+        study_date__gte=start_date,
+        study_date__lte=end_date
+    ).order_by('study_date')
+    return [await Study_Pydantic.from_tortoise_orm(s) for s in studies]
+
+async def get_studies_by_status(status: str) -> List[Study_Pydantic]:
+    studies = await Study.filter(status=status)
+    return [await Study_Pydantic.from_tortoise_orm(s) for s in studies] 

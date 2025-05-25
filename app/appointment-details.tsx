@@ -3,13 +3,13 @@ import { View, Text, StyleSheet, ScrollView, Alert } from 'react-native';
 import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Stack } from 'expo-router';
 import { Calendar, Clock, User, FileText, CheckCircle2 } from 'lucide-react-native';
-import Colors from '@/constants/colors';
-import { usePatientStore } from '@/store/patientStore';
-import { useChecklistStore } from '@/store/checklistStore';
-import { useAuthStore } from '@/store/authStore';
-import Button from '@/components/shared/Button';
-import ChecklistItem from '@/components/checklist/ChecklistItem';
-import { Appointment } from '@/types';
+import Colors from '../constants/colors';
+import { usePatientStore } from '../store/patientStore';
+import { useChecklistStore } from '../store/checklistStore';
+import { useAuthStore } from '../store/authStore';
+import Button from '../components/shared/Button';
+import ChecklistItem from '../components/checklist/ChecklistItem';
+import { Appointment } from '../types';
 
 export default function AppointmentDetailsScreen() {
   const router = useRouter();
@@ -37,14 +37,14 @@ export default function AppointmentDetailsScreen() {
     console.log('Available appointments:', appointments);
     
     if (appointmentId) {
-      const foundAppointment = appointments.find(a => a.id === appointmentId);
+      const foundAppointment = appointments.find((a: Appointment) => a.id === appointmentId);
       console.log('Found appointment:', foundAppointment);
       
       if (foundAppointment) {
         setAppointment(foundAppointment);
         // Start checklist if not already started
         if (!currentChecklist) {
-          startChecklist(foundAppointment.patientId, foundAppointment.testId, currentUser?.id || '');
+          startChecklist(foundAppointment.patientId, foundAppointment.testId ?? '', currentUser?.id || '');
         }
       }
     }
@@ -167,7 +167,7 @@ export default function AppointmentDetailsScreen() {
       <View style={styles.container}>
         <ScrollView style={styles.content}>
           <View style={styles.header}>
-            <Text style={styles.testName}>{appointment.testName}</Text>
+            <Text style={styles.testName}>{appointment.testName ?? ''}</Text>
             <View style={[styles.statusBadge, { backgroundColor: getStatusColor(appointment.status) }]}>
               <Text style={styles.statusText}>{appointment.status}</Text>
             </View>
@@ -176,7 +176,7 @@ export default function AppointmentDetailsScreen() {
           <View style={styles.infoCard}>
             <View style={styles.infoRow}>
               <User size={20} color={Colors.darkGray} />
-              <Text style={styles.infoText}>{appointment.patientName}</Text>
+              <Text style={styles.infoText}>{appointment.patientName ?? ''}</Text>
             </View>
             <View style={styles.infoRow}>
               <Calendar size={20} color={Colors.darkGray} />
@@ -201,7 +201,7 @@ export default function AppointmentDetailsScreen() {
                 Complete all required items before starting the study
               </Text>
               
-              {currentChecklist.items.map((item) => (
+              {currentChecklist.items.map((item: any) => (
                 <ChecklistItem
                   key={item.id}
                   item={item}

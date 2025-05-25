@@ -3,11 +3,11 @@ import { View, Text, StyleSheet, ScrollView, RefreshControl, Platform } from 're
 // import { Picker } from '@react-native-picker/picker'; // Remove this for web compatibility
 import { useRouter } from 'expo-router';
 import { Stack } from 'expo-router';
-import Colors from '@/constants/colors';
-import { useStudiesStore } from '@/store/studiesStore';
-import StudyCard from '@/components/shared/StudyCard';
-import SearchBar from '@/components/shared/SearchBar';
-import { Study, Modality, StudyStatus } from '@/types';
+import Colors from '../constants/colors';
+import { useStudiesStore } from '../store/studiesStore';
+import StudyCard from '../components/shared/StudyCard';
+import SearchBar from '../components/shared/SearchBar';
+import { Study, Modality, StudyStatus } from '../types';
 
 export default function AllStudiesScreen() {
   const router = useRouter();
@@ -103,7 +103,7 @@ export default function AllStudiesScreen() {
           <select
             style={{ width: '100%', height: 44, borderRadius: 8, background: Colors.card, fontSize: 16, paddingLeft: 8 }}
             value={value}
-            onChange={e => onChange(e.target.value)}
+            onChange={e => onChange((e.target as any).value)}
           >
             {options.map(opt => (
               <option key={opt} value={opt}>{opt}</option>

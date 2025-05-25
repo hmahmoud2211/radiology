@@ -58,7 +58,7 @@ export default function RadiologyReportPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [isDraft, setIsDraft] = useState(false);
   const [error, setError] = useState('');
-  const autosaveTimer = useRef<number | undefined>(undefined);
+  const autosaveTimer = useRef<number | null>(null);
   const [aiLoading, setAiLoading] = useState(false);
   const [aiError, setAiError] = useState('');
   const [pdfLoading, setPdfLoading] = useState(false);
@@ -92,11 +92,13 @@ export default function RadiologyReportPage() {
   useEffect(() => {
     if (!study) return;
     setIsDraft(true);
-    if (autosaveTimer.current) clearTimeout(autosaveTimer.current);
+    if (typeof autosaveTimer.current === 'number') clearTimeout(autosaveTimer.current);
     autosaveTimer.current = setTimeout(() => {
       handleSaveDraft();
     }, 1500);
-    return () => clearTimeout(autosaveTimer.current);
+    return () => {
+      if (typeof autosaveTimer.current === 'number') clearTimeout(autosaveTimer.current);
+    };
   }, [form]);
 
   const handleInput = (field: string, value: string) => {
@@ -171,7 +173,7 @@ export default function RadiologyReportPage() {
         base64 = await FileSystem.readAsStringAsync(uri, { encoding: FileSystem.EncodingType.Base64 });
       }
       setAiLoading(true);
-      const res = await fetch('http://localhost:8000/api/analyze', {
+      const res = await fetch('http://192.168.1.9:8000/api/analyze', {
         method: 'POST',
         headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
         body: `image_base64=${encodeURIComponent(base64)}`,

@@ -241,6 +241,7 @@ export default function ScheduleAppointmentScreen() {
         time: selectedTime,
         status: 'Scheduled',
         notes: specialInstructions || undefined,
+        type: selectedTest.modality || 'Imaging',
       };
       
       // Add appointment to store

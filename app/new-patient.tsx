@@ -13,9 +13,9 @@ import { useRouter, useLocalSearchParams } from 'expo-router';
 import { Stack } from 'expo-router';
 import DateTimePicker, { DateTimePickerEvent } from '@react-native-community/datetimepicker';
 import { ChevronDown, X } from 'lucide-react-native';
-import Colors from '@/constants/colors';
-import { usePatientStore } from '@/store/patientStore';
-import Button from '@/components/shared/Button';
+import Colors from '../constants/colors';
+import { usePatientStore } from '../store/patientStore';
+import Button from '../components/shared/Button';
 import {
   NewPatientFormData,
   Gender,
@@ -28,7 +28,7 @@ import {
   InsuranceProvider,
   RequiredDocument,
   Patient,
-} from '@/types';
+} from '../types';
 
 const GENDERS: Gender[] = ['Male', 'Female', 'Other'];
 const SCAN_TYPES: ScanType[] = ['MRI', 'CT', 'X-ray', 'Ultrasound'];
@@ -102,11 +102,11 @@ export default function NewPatientScreen() {
   });
 
   const handleInputChange = (field: keyof NewPatientFormData, value: any) => {
-    setFormData((prev) => ({ ...prev, [field]: value }));
+    setFormData((prev: NewPatientFormData) => ({ ...prev, [field]: value }));
   };
 
   const handleMultiSelect = (field: keyof NewPatientFormData, value: any) => {
-    setFormData((prev) => {
+    setFormData((prev: NewPatientFormData) => {
       const currentValues = prev[field] as any[];
       const newValues = currentValues.includes(value)
         ? currentValues.filter((v) => v !== value)

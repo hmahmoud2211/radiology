@@ -67,7 +67,7 @@ export default function PatientHistoryScreen() {
           patientAppointments.map((appt) => (
             <View key={appt.id} style={styles.appointmentCard}>
               <Text style={styles.appointmentDate}>{appt.date} {appt.time}</Text>
-              <Text style={styles.infoText}>{appt.testName}</Text>
+              <Text style={styles.infoText}>{appt.testName ?? ''}</Text>
               {appt.notes && <Text style={styles.infoText}>Notes: {appt.notes}</Text>}
               <Text style={styles.infoText}>Status: {appt.status}</Text>
             </View>
