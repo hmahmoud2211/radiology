@@ -4,7 +4,7 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import { Patient, Appointment } from '@/types';
 import { patients as mockPatients } from '@/mocks/patients';
 import { appointments as mockAppointments } from '@/mocks/appointments';
-import { TIME_SLOTS } from '@/app/(tabs)/weekly-schedule';
+import { TIME_SLOTS } from '@/constants/timeSlots';
 
 interface PatientState {
   patients: Patient[];
